@@ -3,8 +3,27 @@ import { SettingsManager } from '../services/SettingsManager';
 import { LLMProviderType, ILLMConfig } from '../services/llm/types';
 import { IServiceResult } from '../../shared/types';
 
+interface ISettings {
+  llm: {
+    provider: LLMProviderType;
+    openai: ILLMConfig;
+    deepseek: ILLMConfig;
+    custom: ILLMConfig;
+  };
+  project: {
+    lastUsedPath?: string;
+  };
+}
+
+/**
+ * Registers IPC handlers for settings-related operations.
+ * Handles retrieving settings, updating LLM configurations, and setting the active provider.
+ */
 export function registerSettingsHandlers(): void {
-  ipcMain.handle('settings:get', async (): Promise<IServiceResult<any>> => {
+  /**
+   * IPC handler for retrieving all application settings.
+   */
+  ipcMain.handle('settings:get', async (): Promise<IServiceResult<ISettings>> => {
     try {
       return {
         success: true,
@@ -18,6 +37,9 @@ export function registerSettingsHandlers(): void {
     }
   });
 
+  /**
+   * IPC handler for updating LLM provider configuration.
+   */
   ipcMain.handle('settings:update-llm', async (_event, provider: LLMProviderType, config: Partial<ILLMConfig>): Promise<IServiceResult<void>> => {
     try {
       SettingsManager.updateLLMConfig(provider, config);
@@ -30,6 +52,9 @@ export function registerSettingsHandlers(): void {
     }
   });
 
+  /**
+   * IPC handler for setting the active LLM provider.
+   */
   ipcMain.handle('settings:set-provider', async (_event, provider: LLMProviderType): Promise<IServiceResult<void>> => {
     try {
       SettingsManager.setCurrentProvider(provider);
