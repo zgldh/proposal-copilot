@@ -4,7 +4,6 @@ import { ConversationEngine } from '../services/conversation/ConversationEngine'
 import { TreeOperations } from '../services/conversation/TreeOperations';
 import { ProjectService } from '../services/ProjectService';
 import { SettingsManager } from '../services/SettingsManager';
-import { IProjectData } from '../../shared/types';
 import { IServiceResult } from '../../shared/types';
 
 const activeEngines = new Map<string, ConversationEngine>();

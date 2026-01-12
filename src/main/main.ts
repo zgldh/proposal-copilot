@@ -6,7 +6,6 @@ import { registerConversationHandlers } from './ipc/conversationHandlers';
 import { registerSettingsHandlers } from './ipc/settingsHandlers';
 import { registerDocgenHandlers } from './ipc/docgenHandlers';
 import { SettingsManager } from './services/SettingsManager';
-import { ProjectService } from './services/ProjectService';
 
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow: BrowserWindow | null = null;
