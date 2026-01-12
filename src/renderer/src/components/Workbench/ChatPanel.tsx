@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Input, Button, Card, Select, Spin } from 'antd';
 import { SendOutlined, SettingOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
-import { IConversationMessage, ILLMResponseParsed } from '../../../../global';
+import { IConversationMessage, ILLMResponseParsed } from '../../global';
 
 interface IChatPanelProps {
   projectPath: string;
@@ -28,14 +28,14 @@ export const ChatPanel: React.FC<IChatPanelProps> = ({ projectPath, onTreeUpdate
     loadHistory();
   }, [projectPath]);
 
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     const result = await window.electronAPI.conversation.getHistory(projectPath);
     if (result.success && result.data) {
       setMessages(result.data);
     }
-  };
+  }, [projectPath]);
 
-  const handleSend = async () => {
+  const handleSend = useCallback(async () => {
     if (!input.trim()) return;
 
     const userMessage: IConversationMessage = {
@@ -80,13 +80,13 @@ export const ChatPanel: React.FC<IChatPanelProps> = ({ projectPath, onTreeUpdate
     } finally {
       setLoading(false);
     }
-  };
+  }, [input, projectPath, onTreeUpdate]);
 
   const formatResponse = (response: ILLMResponseParsed): string => {
     let text = '';
     if (response.proactiveQuestions.length > 0) {
       text += '\n\n**Questions:**\n';
-      response.proactiveQuestions.forEach((q, i) => {
+      response.proactiveQuestions.forEach((q: string, i: number) => {
         text += `${i + 1}. ${q}\n`;
       });
     }
@@ -135,9 +135,9 @@ export const ChatPanel: React.FC<IChatPanelProps> = ({ projectPath, onTreeUpdate
         flexDirection: 'column',
         gap: '12px'
       }}>
-        {messages.map((msg, idx) => (
+        {messages.map((msg) => (
           <Card
-            key={idx}
+            key={msg.timestamp}
             size="small"
             style={{
               backgroundColor: msg.role === 'user' ? '#e6f7ff' : '#f5f5f5',
