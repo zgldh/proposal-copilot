@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Tabs, Button, Space, message } from 'antd';
 import { FileWordOutlined, FileExcelOutlined } from '@ant-design/icons';
 import type { TabsProps } from 'antd';
@@ -11,21 +11,34 @@ interface IContextPanelProps {
 }
 
 export const ContextPanel: React.FC<IContextPanelProps> = ({ projectStructure, projectPath }) => {
+  const [loadingWord, setLoadingWord] = useState(false);
+  const [loadingExcel, setLoadingExcel] = useState(false);
+
   const handleExportWord = async () => {
-    const result = await window.electronAPI.docgen.exportWord(projectPath);
-    if (result.success) {
-      message.success(`Word document exported to: ${result.data}`);
-    } else {
-      message.error(`Export failed: ${result.error}`);
+    setLoadingWord(true);
+    try {
+      const result = await window.electronAPI.docgen.exportWord(projectPath);
+      if (result.success) {
+        message.success(`Word document exported to: ${result.data}`);
+      } else {
+        message.error(`Export failed: ${result.error}`);
+      }
+    } finally {
+      setLoadingWord(false);
     }
   };
 
   const handleExportExcel = async () => {
-    const result = await window.electronAPI.docgen.exportExcel(projectPath);
-    if (result.success) {
-      message.success(`Excel document exported to: ${result.data}`);
-    } else {
-      message.error(`Export failed: ${result.error}`);
+    setLoadingExcel(true);
+    try {
+      const result = await window.electronAPI.docgen.exportExcel(projectPath);
+      if (result.success) {
+        message.success(`Excel document exported to: ${result.data}`);
+      } else {
+        message.error(`Export failed: ${result.error}`);
+      }
+    } finally {
+      setLoadingExcel(false);
     }
   };
 
@@ -40,8 +53,8 @@ export const ContextPanel: React.FC<IContextPanelProps> = ({ projectStructure, p
       label: (
         <Space>
           <span>Live Preview</span>
-          <Button icon={<FileWordOutlined />} size="small" onClick={handleExportWord}>Export Word</Button>
-          <Button icon={<FileExcelOutlined />} size="small" onClick={handleExportExcel}>Export Excel</Button>
+          <Button icon={<FileWordOutlined />} size="small" onClick={handleExportWord} loading={loadingWord}>Export Word</Button>
+          <Button icon={<FileExcelOutlined />} size="small" onClick={handleExportExcel} loading={loadingExcel}>Export Excel</Button>
         </Space>
       ),
       children: (
