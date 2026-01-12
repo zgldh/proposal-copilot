@@ -1,7 +1,7 @@
 import { ILLMProvider, ILLMMessage, LLMProviderType, ILLMConfig, ILLMError } from '../llm';
 import { ProviderFactory } from '../llm/ProviderFactory';
 import { IProjectData } from '../../../shared/types';
-import { IOperation, ILLMResponseParsed, IConversationMessage, IConversationEngine } from './types';
+import { ILLMResponseParsed, IConversationMessage, IConversationEngine } from './types';
 
 const SYSTEM_PROMPT = `You are a proposal assistant for System Integration projects. 
 Your role is to help users build project structure through conversation.

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Input, Button, Card, Select, Spin } from 'antd';
-import { SendOutlined, SettingOutlined } from '@ant-design/icons';
+import { SendOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import { IConversationMessage, ILLMResponseParsed } from '../../global';
 
