@@ -1,57 +1,45 @@
 import { ipcMain, dialog } from 'electron';
+import { promises as fs } from 'fs';
+import * as path from 'path';
 import { DocumentGenerator } from '../services/docgen/DocumentGenerator';
-import { IServiceResult } from '../../shared/types';
+import { IServiceResult, IProjectData } from '../../shared/types';
 
 export function registerDocgenHandlers(): void {
-  ipcMain.handle('docgen:export-word', async (_e, { projectPath, outputPath }: { projectPath: string; outputPath?: string }): Promise<IServiceResult<string>> => {
+  ipcMain.handle('docgen:export-word', async (_e, projectPath: string): Promise<IServiceResult<string>> => {
     try {
-      const result = await DocumentGenerator.exportToWord(projectPath, outputPath);
-      if (!result.success) {
-        return { success: false, error: result.error };
-      }
-      return { success: true, data: result.filePath };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
-
-  ipcMain.handle('docgen:export-excel', async (_e, { projectPath, outputPath }: { projectPath: string; outputPath?: string }): Promise<IServiceResult<string>> => {
-    try {
-      const result = await DocumentGenerator.exportToExcel(projectPath, outputPath);
-      if (!result.success) {
-        return { success: false, error: result.error };
-      }
-      return { success: true, data: result.filePath };
-    } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
-    }
-  });
-
-  ipcMain.handle('docgen:save-as', async (_e, { projectPath, format }: { projectPath: string; format: 'word' | 'excel' }): Promise<IServiceResult<string>> => {
-    try {
-      const defaultName = 'export';
-      const filters = format === 'word'
-        ? [{ name: 'Word Document', extensions: ['docx'] }]
-        : [{ name: 'Excel Workbook', extensions: ['xlsx'] }];
+      const projectData = JSON.parse(await fs.readFile(path.join(projectPath, 'project.json'), 'utf-8')) as IProjectData;
 
       const result = await dialog.showSaveDialog({
-        defaultPath: defaultName,
-        filters
+        defaultPath: `${projectData.meta.name.replace(/\s+/g, '_')}.docx`,
+        filters: [{ name: 'Word Document', extensions: ['docx'] }]
       });
 
       if (result.canceled || !result.filePath) {
         return { success: false, error: 'Save dialog canceled' };
       }
 
-      const exportResult = format === 'word'
-        ? await DocumentGenerator.exportToWord(projectPath, result.filePath)
-        : await DocumentGenerator.exportToExcel(projectPath, result.filePath);
+      await DocumentGenerator.exportToWord(projectData, result.filePath);
+      return { success: true, data: result.filePath };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : String(error) };
+    }
+  });
 
-      if (!exportResult.success) {
-        return { success: false, error: exportResult.error };
+  ipcMain.handle('docgen:export-excel', async (_e, projectPath: string): Promise<IServiceResult<string>> => {
+    try {
+      const projectData = JSON.parse(await fs.readFile(path.join(projectPath, 'project.json'), 'utf-8')) as IProjectData;
+
+      const result = await dialog.showSaveDialog({
+        defaultPath: `${projectData.meta.name.replace(/\s+/g, '_')}.xlsx`,
+        filters: [{ name: 'Excel Workbook', extensions: ['xlsx'] }]
+      });
+
+      if (result.canceled || !result.filePath) {
+        return { success: false, error: 'Save dialog canceled' };
       }
 
-      return { success: true, data: exportResult.filePath };
+      await DocumentGenerator.exportToExcel(projectData, result.filePath);
+      return { success: true, data: result.filePath };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
