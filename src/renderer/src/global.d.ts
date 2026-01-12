@@ -21,6 +21,21 @@ export interface IConversationMessage {
   timestamp: number;
 }
 
+export interface ILLMConfig {
+  apiKey?: string;
+  baseURL?: string;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface ILLMSettings {
+  provider: 'openai' | 'deepseek' | 'custom';
+  openai: ILLMConfig;
+  deepseek: ILLMConfig;
+  custom: ILLMConfig;
+}
+
 export interface IElectronAPI {
   checkBackendStatus: () => Promise<IBackendResponse>;
   selectDirectory: () => Promise<IServiceResult<string>>;
@@ -33,8 +48,8 @@ export interface IElectronAPI {
     clearHistory: (projectPath: string) => Promise<{ success: boolean; error?: string }>;
   };
   settings: {
-    get: () => Promise<{ success: boolean; data?: any; error?: string }>;
-    updateLLM: (provider: 'openai' | 'deepseek' | 'custom', config: any) => Promise<{ success: boolean; error?: string }>;
+    get: () => Promise<{ success: boolean; data?: ILLMSettings; error?: string }>;
+    updateLLM: (provider: 'openai' | 'deepseek' | 'custom', config: Partial<ILLMConfig>) => Promise<{ success: boolean; error?: string }>;
     setProvider: (provider: 'openai' | 'deepseek' | 'custom') => Promise<{ success: boolean; error?: string }>;
   };
 }
