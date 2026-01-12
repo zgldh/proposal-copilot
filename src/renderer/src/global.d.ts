@@ -52,6 +52,11 @@ export interface IElectronAPI {
     updateLLM: (provider: 'openai' | 'deepseek' | 'custom', config: Partial<ILLMConfig>) => Promise<{ success: boolean; error?: string }>;
     setProvider: (provider: 'openai' | 'deepseek' | 'custom') => Promise<{ success: boolean; error?: string }>;
   };
+  docgen: {
+    exportToWord: (projectPath: string, outputPath?: string) => Promise<{ success: boolean; data?: string; error?: string }>;
+    exportToExcel: (projectPath: string, outputPath?: string) => Promise<{ success: boolean; data?: string; error?: string }>;
+    saveAs: (projectPath: string, format: 'word' | 'excel') => Promise<{ success: boolean; data?: string; error?: string }>;
+  };
 }
 
 declare global {

@@ -50,7 +50,7 @@ export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project, projectPat
 
           {/* RIGHT PANEL: Context (Tree/Preview) */}
           <Panel minSize={30} order={2}>
-            <ContextPanel projectStructure={project.structure_tree} />
+            <ContextPanel projectStructure={project.structure_tree} projectPath={projectPath} />
           </Panel>
         </PanelGroup>
       </div>
