@@ -2,6 +2,8 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { IBackendResponse } from '../shared/types';
 import { registerProjectHandlers } from './ipc/projectHandlers';
+import { registerConversationHandlers } from './ipc/conversationHandlers';
+import { registerSettingsHandlers } from './ipc/settingsHandlers';
 
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow: BrowserWindow | null = null;
@@ -40,6 +42,8 @@ ipcMain.handle('check-backend-status', async (): Promise<IBackendResponse> => {
 
 app.on('ready', () => {
   registerProjectHandlers();
+  registerConversationHandlers();
+  registerSettingsHandlers();
   createWindow();
 });
 
