@@ -1,11 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { Button } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
 import { IProjectData } from '../../../../shared/types';
 import { ChatPanel } from './ChatPanel';
 import { ContextPanel } from './ContextPanel';
-import { SettingsModal } from '../SettingsModal';
 
 interface IWorkbenchProps {
   project: IProjectData;
@@ -14,8 +11,6 @@ interface IWorkbenchProps {
 }
 
 export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project, projectPath, onSave }) => {
-  const [settingsVisible, setSettingsVisible] = useState(false);
-
   return (
     <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
       {/* Optional Header Area */}
@@ -26,19 +21,10 @@ export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project, projectPat
         color: 'white',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
         fontSize: '14px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span style={{ fontWeight: 'bold', marginRight: '10px' }}>Proposal Copilot</span>
-          <span style={{ opacity: 0.7 }}> - {project.meta.name} (v{project.meta.version})</span>
-        </div>
-        <Button
-          type="text"
-          icon={<SettingOutlined />}
-          onClick={() => setSettingsVisible(true)}
-          style={{ color: 'white' }}
-        />
+        <span style={{ fontWeight: 'bold', marginRight: '10px' }}>Proposal Copilot</span>
+        <span style={{ opacity: 0.7 }}> - {project.meta.name} (v{project.meta.version})</span>
       </header>
 
       {/* Main Split Content */}
@@ -68,8 +54,6 @@ export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project, projectPat
           </Panel>
         </PanelGroup>
       </div>
-
-      <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </div>
   );
 };

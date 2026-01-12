@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Button, message } from 'antd';
+import { Modal, Form, Input, Select, InputNumber, message } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
-import { ISettings, ILLMConfig } from '../../../shared/types';
+import { ISettings } from '../../../shared/types';
 
 interface ISettingsModalProps {
   visible: boolean;
@@ -47,43 +47,18 @@ export const SettingsModal: React.FC<ISettingsModalProps> = ({ visible, onClose 
     }
   };
 
-  const handleProviderChange = (provider: 'openai' | 'deepseek' | 'custom') => {
-    const result = window.electronAPI.settings.setProvider(provider);
-    result.then(res => {
-      if (res.success) {
-        message.success(`Provider changed to ${provider}`);
-      } else {
-        message.error(`Failed to change provider: ${res.error}`);
-      }
-    });
-  };
-
-  const handleLLMConfigChange = (provider: 'openai' | 'deepseek' | 'custom') => {
-    const values = form.getFieldsValue();
-
-    const config: Partial<ILLMConfig> = {};
-    if (values[provider]?.apiKey) config.apiKey = values[provider].apiKey;
-    if (values[provider]?.model) config.model = values[provider].model;
-    if (values[provider]?.baseURL) config.baseURL = values[provider].baseURL;
-    if (values[provider]?.temperature !== undefined) config.temperature = values[provider].temperature;
-
-    window.electronAPI.settings.updateLLM(provider, config).then(res => {
-      if (res.success) {
-        message.success(`${provider} configuration updated`);
-      } else {
-        message.error(`Failed to update ${provider}: ${res.error}`);
-      }
-    });
-  };
-
-  const handleSave = async () => {
+  const handleOk = async () => {
     try {
       setLoading(true);
-      await Promise.all([
-        handleLLMConfigChange('openai'),
-        handleLLMConfigChange('deepseek'),
-        handleLLMConfigChange('custom'),
-      ]);
+      const values = await form.validateFields();
+
+      const activeProvider = values.llm.provider;
+
+      await window.electronAPI.settings.setProvider(activeProvider);
+      await window.electronAPI.settings.updateLLM('openai', values.llm.openai || {});
+      await window.electronAPI.settings.updateLLM('deepseek', values.llm.deepseek || {});
+      await window.electronAPI.settings.updateLLM('custom', values.llm.custom || {});
+
       message.success('Settings saved successfully');
       onClose();
     } catch (error) {
@@ -93,42 +68,56 @@ export const SettingsModal: React.FC<ISettingsModalProps> = ({ visible, onClose 
     }
   };
 
-  const LLMConfigForm = ({ provider }: { provider: 'openai' | 'deepseek' | 'custom' }) => (
-    <Form.Item label={`${provider.charAt(0).toUpperCase() + provider.slice(1)} Configuration`} style={{ marginBottom: 0 }}>
-      <div style={{ padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
-        <Form.Item
-          name={['llm', provider, 'apiKey']}
-          label="API Key"
-          style={{ marginBottom: 12 }}
-        >
-          <Input.Password placeholder="Enter API key" />
-        </Form.Item>
-        <Form.Item
-          name={['llm', provider, 'model']}
-          label="Model"
-          style={{ marginBottom: 12 }}
-        >
-          <Input placeholder="Enter model name" />
-        </Form.Item>
-        {provider === 'custom' && (
+  const LLMConfigForm = ({ provider }: { provider: 'openai' | 'deepseek' | 'custom' }) => {
+    const activeProvider = Form.useWatch(['llm', 'provider'], form);
+
+    return (
+      <Form.Item label={`${provider.charAt(0).toUpperCase() + provider.slice(1)} Configuration`} style={{ marginBottom: 0 }}>
+        <div style={{ padding: '16px', background: '#f5f5f5', borderRadius: '8px' }}>
           <Form.Item
-            name={['llm', provider, 'baseURL']}
-            label="Base URL"
+            name={['llm', provider, 'apiKey']}
+            label="API Key"
             style={{ marginBottom: 12 }}
+            rules={activeProvider === provider ? [{ required: true, message: `API Key is required for ${provider}` }] : []}
           >
-            <Input placeholder="https://api.example.com/v1" />
+            <Input.Password placeholder={provider === 'openai' ? 'sk-...' : 'Enter API key'} />
           </Form.Item>
-        )}
-        <Form.Item
-          name={['llm', provider, 'temperature']}
-          label="Temperature"
-          style={{ marginBottom: 0 }}
-        >
-          <Input type="number" step={0.1} min={0} max={2} placeholder="0.7" />
-        </Form.Item>
-      </div>
-    </Form.Item>
-  );
+          <Form.Item
+            name={['llm', provider, 'model']}
+            label="Model"
+            style={{ marginBottom: 12 }}
+            rules={activeProvider === provider ? [{ required: true, message: `Model is required for ${provider}` }] : []}
+          >
+            <Input
+              placeholder={
+                provider === 'openai' ? 'gpt-4o-mini'
+                : provider === 'deepseek' ? 'deepseek-chat'
+                : 'llama3'
+              }
+            />
+          </Form.Item>
+          {provider === 'custom' && (
+            <Form.Item
+              name={['llm', provider, 'baseURL']}
+              label="Base URL"
+              style={{ marginBottom: 12 }}
+              rules={activeProvider === 'custom' ? [{ required: true, message: 'Base URL is required for custom provider' }] : []}
+            >
+              <Input placeholder="http://localhost:11434/v1" />
+            </Form.Item>
+          )}
+          <Form.Item
+            name={['llm', provider, 'temperature']}
+            label="Temperature"
+            style={{ marginBottom: 0 }}
+            rules={activeProvider === provider ? [{ required: true, message: 'Temperature is required' }] : []}
+          >
+            <InputNumber step={0.1} min={0} max={2} placeholder="0.7" style={{ width: '100%' }} />
+          </Form.Item>
+        </div>
+      </Form.Item>
+    );
+  };
 
   return (
     <Modal
@@ -139,15 +128,9 @@ export const SettingsModal: React.FC<ISettingsModalProps> = ({ visible, onClose 
         </span>
       }
       open={visible}
+      onOk={handleOk}
       onCancel={onClose}
-      footer={[
-        <Button key="cancel" onClick={onClose}>
-          Cancel
-        </Button>,
-        <Button key="save" type="primary" loading={loading} onClick={handleSave}>
-          Save
-        </Button>,
-      ]}
+      confirmLoading={loading}
       width={600}
     >
       <Form
@@ -167,10 +150,7 @@ export const SettingsModal: React.FC<ISettingsModalProps> = ({ visible, onClose 
           label="Active LLM Provider"
           rules={[{ required: true, message: 'Please select a provider' }]}
         >
-          <Select
-            options={LLM_PROVIDER_OPTIONS}
-            onChange={handleProviderChange}
-          />
+          <Select options={LLM_PROVIDER_OPTIONS} />
         </Form.Item>
 
         <LLMConfigForm provider="openai" />
