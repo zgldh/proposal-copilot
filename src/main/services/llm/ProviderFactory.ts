@@ -21,12 +21,13 @@ export class ProviderFactory {
         return new DeepSeekProvider();
       case 'custom':
         return new CustomProvider();
-      default:
+      default: {
         const error: ILLMError = {
           code: 'CONFIG_ERROR',
           message: `Unknown provider type: ${type}`,
         };
         throw error;
+      }
     }
   }
 }
