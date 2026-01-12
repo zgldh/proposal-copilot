@@ -2,7 +2,16 @@ import { IProjectData, IProjectNode } from '../../../shared/types';
 import { IOperation } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
+/**
+ * Utility class for applying operations to the project tree structure
+ */
 export class TreeOperations {
+  /**
+   * Apply multiple operations to project data sequentially
+   * @param projectData - Current project data
+   * @param operations - Array of operations to apply
+   * @returns Updated project data
+   */
   static applyOperations(projectData: IProjectData, operations: IOperation[]): IProjectData {
     let updatedData = { ...projectData };
     for (const op of operations) {
@@ -28,6 +37,10 @@ export class TreeOperations {
 
   private static addNode(projectData: IProjectData, operation: IOperation): IProjectData {
     if (!operation.node) return projectData;
+
+    if (operation.node.quantity <= 0) {
+      return projectData;
+    }
 
     const newNode: IProjectNode = {
       id: uuidv4(),
