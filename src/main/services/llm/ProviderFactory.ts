@@ -1,9 +1,18 @@
-import { LLMProviderType, ILLMProvider } from './types';
+import { LLMProviderType, ILLMProvider, ILLMError } from './types';
 import { OpenAIProvider } from './OpenAIProvider';
 import { DeepSeekProvider } from './DeepSeekProvider';
 import { CustomProvider } from './CustomProvider';
 
+/**
+ * Factory for creating LLM provider instances
+ */
 export class ProviderFactory {
+  /**
+   * Create a new LLM provider instance
+   * @param type - The type of provider to create
+   * @returns A new provider instance
+   * @throws ILLMError if provider type is unknown
+   */
   static create(type: LLMProviderType): ILLMProvider {
     switch (type) {
       case 'openai':
@@ -13,7 +22,11 @@ export class ProviderFactory {
       case 'custom':
         return new CustomProvider();
       default:
-        throw new Error(`Unknown provider type: ${type}`);
+        const error: ILLMError = {
+          code: 'CONFIG_ERROR',
+          message: `Unknown provider type: ${type}`,
+        };
+        throw error;
     }
   }
 }
