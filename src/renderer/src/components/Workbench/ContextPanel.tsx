@@ -32,18 +32,18 @@ export const ContextPanel: React.FC<IContextPanelProps> = ({ projectStructure, p
   const items: TabsProps['items'] = [
     {
       key: 'structure',
-      label: (
-        <Space>
-          <span>Requirement Tree</span>
-          <Button icon={<FileWordOutlined />} size="small" onClick={handleExportWord}>Export Word</Button>
-          <Button icon={<FileExcelOutlined />} size="small" onClick={handleExportExcel}>Export Excel</Button>
-        </Space>
-      ),
+      label: 'Requirement Tree',
       children: <RequirementTree nodes={projectStructure} />,
     },
     {
       key: 'preview',
-      label: 'Live Preview',
+      label: (
+        <Space>
+          <span>Live Preview</span>
+          <Button icon={<FileWordOutlined />} size="small" onClick={handleExportWord}>Export Word</Button>
+          <Button icon={<FileExcelOutlined />} size="small" onClick={handleExportExcel}>Export Excel</Button>
+        </Space>
+      ),
       children: (
         <div style={{ padding: '16px', color: '#666' }}>
           <p>Document preview will appear here.</p>
