@@ -1,16 +1,32 @@
 import OpenAI from 'openai';
 import { ILLMConfig, ILLMMessage, ILLMResponse, ILLMProvider, ILLMError } from './types';
 
+/**
+ * Custom endpoint implementation of LLM provider
+ */
 export class CustomProvider implements ILLMProvider {
   private client: OpenAI | null = null;
   private config: ILLMConfig | null = null;
 
+  /**
+   * Configure the custom provider
+   * @param config - Configuration containing base URL, model name, and optional API key
+   * @throws ILLMError if base URL or model is missing
+   */
   configure(config: ILLMConfig): void {
     if (!config.baseURL) {
-      throw { code: 'CONFIG_ERROR', message: 'Base URL is required for custom provider' } as ILLMError;
+      const error: ILLMError = {
+        code: 'CONFIG_ERROR',
+        message: 'Base URL is required for custom provider',
+      };
+      throw error;
     }
     if (!config.model) {
-      throw { code: 'CONFIG_ERROR', message: 'Model name is required for custom provider' } as ILLMError;
+      const error: ILLMError = {
+        code: 'CONFIG_ERROR',
+        message: 'Model name is required for custom provider',
+      };
+      throw error;
     }
     this.config = { ...config };
     this.client = new OpenAI({
@@ -19,9 +35,19 @@ export class CustomProvider implements ILLMProvider {
     });
   }
 
+  /**
+   * Send messages to custom LLM endpoint and get response
+   * @param messages - Array of conversation messages
+   * @returns Response with generated content and usage information
+   * @throws ILLMError if provider not configured or API call fails
+   */
   async sendMessage(messages: ILLMMessage[]): Promise<ILLMResponse> {
     if (!this.client || !this.config) {
-      throw { code: 'CONFIG_ERROR', message: 'Custom provider not configured' } as ILLMError;
+      const error: ILLMError = {
+        code: 'CONFIG_ERROR',
+        message: 'Custom provider not configured',
+      };
+      throw error;
     }
 
     try {
@@ -34,7 +60,11 @@ export class CustomProvider implements ILLMProvider {
 
       const choice = response.choices[0];
       if (!choice) {
-        throw { code: 'API_ERROR', message: 'No response choices returned' } as ILLMError;
+        const error: ILLMError = {
+          code: 'API_ERROR',
+          message: 'No response choices returned',
+        };
+        throw error;
       }
 
       return {
@@ -45,19 +75,28 @@ export class CustomProvider implements ILLMProvider {
           totalTokens: response.usage.total_tokens,
         } : undefined,
       };
-    } catch (error) {
-      if (this.isILLMError(error)) {
-        throw error;
+    } catch (err) {
+      if (this.isILLMError(err)) {
+        throw err;
       }
-      throw { code: 'API_ERROR', message: `Custom LLM API error: ${error instanceof Error ? error.message : String(error)}` } as ILLMError;
+      const error: ILLMError = {
+        code: 'API_ERROR',
+        message: err instanceof Error ? err.message : 'Unknown error calling custom LLM API',
+        details: err,
+      };
+      throw error;
     }
   }
 
+  /**
+   * Check if the provider has been configured
+   * @returns true if configured, false otherwise
+   */
   isConfigured(): boolean {
     return this.client !== null;
   }
 
-  private isILLMError(error: unknown): error is ILLMError {
-    return typeof error === 'object' && error !== null && 'code' in error && 'message' in error;
+  private isILLMError(err: unknown): err is ILLMError {
+    return typeof err === 'object' && err !== null && 'code' in err && 'message' in err;
   }
 }
