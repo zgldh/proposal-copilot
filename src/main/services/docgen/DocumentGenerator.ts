@@ -1,5 +1,4 @@
 import { promises as fs } from 'fs';
-import * as path from 'path';
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType } from 'docx';
 import ExcelJS from 'exceljs';
 import { IProjectData, IProjectNode } from '../../../shared/types';
