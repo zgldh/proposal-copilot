@@ -22,8 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     setProvider: (provider: LLMProviderType): Promise<IServiceResult<void>> => ipcRenderer.invoke('settings:set-provider', provider),
   },
   docgen: {
-    exportToWord: (projectPath: string, outputPath?: string): Promise<IServiceResult<string>> => ipcRenderer.invoke('docgen:export-word', { projectPath, outputPath }),
-    exportToExcel: (projectPath: string, outputPath?: string): Promise<IServiceResult<string>> => ipcRenderer.invoke('docgen:export-excel', { projectPath, outputPath }),
-    saveAs: (projectPath: string, format: 'word' | 'excel'): Promise<IServiceResult<string>> => ipcRenderer.invoke('docgen:save-as', { projectPath, format }),
+    exportWord: (projectPath: string): Promise<IServiceResult<string>> => ipcRenderer.invoke('docgen:export-word', projectPath),
+    exportExcel: (projectPath: string): Promise<IServiceResult<string>> => ipcRenderer.invoke('docgen:export-excel', projectPath),
   },
 });
