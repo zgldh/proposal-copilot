@@ -9,7 +9,16 @@ import { IServiceResult } from '../../shared/types';
 
 const activeEngines = new Map<string, ConversationEngine>();
 
+/**
+ * Registers IPC handlers for conversation-related operations.
+ * Handles sending messages, retrieving conversation history, and clearing history.
+ */
 export function registerConversationHandlers(): void {
+  /**
+   * IPC handler for sending a user message to the conversation engine.
+   * Creates or reuses an engine instance per project, sends the message,
+   * and applies any tree operations returned by the LLM.
+   */
   ipcMain.handle('conversation:send-message', async (_event, message: string, projectPath: string): Promise<IServiceResult<ILLMResponseParsed>> => {
     try {
       const projectData = await ProjectService.loadProject(projectPath);
@@ -41,6 +50,10 @@ export function registerConversationHandlers(): void {
     }
   });
 
+  /**
+   * IPC handler for retrieving conversation history for a project.
+   * Returns an empty array if no engine exists for the project.
+   */
   ipcMain.handle('conversation:get-history', async (_event, projectPath: string): Promise<IServiceResult<IConversationMessage[]>> => {
     try {
       const engine = activeEngines.get(projectPath);
@@ -59,6 +72,10 @@ export function registerConversationHandlers(): void {
     }
   });
 
+  /**
+   * IPC handler for clearing conversation history for a project.
+   * Silently succeeds if no engine exists for the project.
+   */
   ipcMain.handle('conversation:clear-history', async (_event, projectPath: string): Promise<IServiceResult<void>> => {
     try {
       const engine = activeEngines.get(projectPath);
