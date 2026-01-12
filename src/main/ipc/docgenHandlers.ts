@@ -1,5 +1,5 @@
 import { ipcMain, dialog } from 'electron';
-import { DocumentGenerator, ExportResult } from '../services/docgen/DocumentGenerator';
+import { DocumentGenerator } from '../services/docgen/DocumentGenerator';
 import { IServiceResult } from '../../shared/types';
 
 export function registerDocgenHandlers(): void {

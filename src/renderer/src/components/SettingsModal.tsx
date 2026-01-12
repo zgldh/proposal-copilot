@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, Button, message, Tabs } from 'antd';
+import { Modal, Form, Input, Select, Button, message } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
 import { ISettings, ILLMConfig } from '../../../shared/types';
 
@@ -17,7 +17,6 @@ const LLM_PROVIDER_OPTIONS = [
 export const SettingsModal: React.FC<ISettingsModalProps> = ({ visible, onClose }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [settings, setSettings] = useState<ISettings | null>(null);
 
   useEffect(() => {
     if (visible) {
@@ -39,7 +38,6 @@ export const SettingsModal: React.FC<ISettingsModalProps> = ({ visible, onClose 
           },
           project: {},
         };
-        setSettings(settings);
         form.setFieldsValue(settings);
       }
     } catch (error) {
