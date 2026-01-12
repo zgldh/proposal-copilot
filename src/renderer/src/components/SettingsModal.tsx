@@ -55,9 +55,7 @@ export const SettingsModal: React.FC<ISettingsModalProps> = ({ visible, onClose 
       const activeProvider = values.llm.provider;
 
       await window.electronAPI.settings.setProvider(activeProvider);
-      await window.electronAPI.settings.updateLLM('openai', values.llm.openai || {});
-      await window.electronAPI.settings.updateLLM('deepseek', values.llm.deepseek || {});
-      await window.electronAPI.settings.updateLLM('custom', values.llm.custom || {});
+      await window.electronAPI.settings.updateLLM(activeProvider, values.llm[activeProvider] || {});
 
       message.success('Settings saved successfully');
       onClose();
