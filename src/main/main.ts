@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent } from 'electron';
 import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import { IBackendResponse } from '../shared/types';
+import { registerProjectHandlers } from './ipc/projectHandlers';
 
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow: BrowserWindow | null = null;
@@ -101,6 +102,7 @@ ipcMain.handle('check-backend-status', async (_event: IpcMainInvokeEvent): Promi
 });
 
 app.on('ready', () => {
+  registerProjectHandlers();
   createWindow();
   initPythonEngine();
 });
