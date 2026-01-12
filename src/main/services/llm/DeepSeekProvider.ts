@@ -1,13 +1,25 @@
 import OpenAI from 'openai';
 import { ILLMConfig, ILLMMessage, ILLMResponse, ILLMProvider, ILLMError } from './types';
 
+/**
+ * DeepSeek implementation of LLM provider
+ */
 export class DeepSeekProvider implements ILLMProvider {
   private client: OpenAI | null = null;
   private config: ILLMConfig | null = null;
 
+  /**
+   * Configure the DeepSeek provider
+   * @param config - Configuration containing API key and model settings
+   * @throws ILLMError if API key is missing
+   */
   configure(config: ILLMConfig): void {
     if (!config.apiKey) {
-      throw { code: 'CONFIG_ERROR', message: 'API key is required for DeepSeek provider' } as ILLMError;
+      const error: ILLMError = {
+        code: 'CONFIG_ERROR',
+        message: 'API key is required for DeepSeek provider',
+      };
+      throw error;
     }
     this.config = { ...config };
     this.client = new OpenAI({
@@ -16,9 +28,19 @@ export class DeepSeekProvider implements ILLMProvider {
     });
   }
 
+  /**
+   * Send messages to DeepSeek API and get response
+   * @param messages - Array of conversation messages
+   * @returns Response with generated content and usage information
+   * @throws ILLMError if provider not configured or API call fails
+   */
   async sendMessage(messages: ILLMMessage[]): Promise<ILLMResponse> {
     if (!this.client || !this.config) {
-      throw { code: 'CONFIG_ERROR', message: 'DeepSeek provider not configured' } as ILLMError;
+      const error: ILLMError = {
+        code: 'CONFIG_ERROR',
+        message: 'DeepSeek provider not configured',
+      };
+      throw error;
     }
 
     try {
@@ -31,7 +53,11 @@ export class DeepSeekProvider implements ILLMProvider {
 
       const choice = response.choices[0];
       if (!choice) {
-        throw { code: 'API_ERROR', message: 'No response choices returned' } as ILLMError;
+        const error: ILLMError = {
+          code: 'API_ERROR',
+          message: 'No response choices returned',
+        };
+        throw error;
       }
 
       return {
@@ -42,19 +68,28 @@ export class DeepSeekProvider implements ILLMProvider {
           totalTokens: response.usage.total_tokens,
         } : undefined,
       };
-    } catch (error) {
-      if (this.isILLMError(error)) {
-        throw error;
+    } catch (err) {
+      if (this.isILLMError(err)) {
+        throw err;
       }
-      throw { code: 'API_ERROR', message: `DeepSeek API error: ${error instanceof Error ? error.message : String(error)}` } as ILLMError;
+      const error: ILLMError = {
+        code: 'API_ERROR',
+        message: err instanceof Error ? err.message : 'Unknown error calling DeepSeek API',
+        details: err,
+      };
+      throw error;
     }
   }
 
+  /**
+   * Check if the provider has been configured
+   * @returns true if configured, false otherwise
+   */
   isConfigured(): boolean {
     return this.client !== null;
   }
 
-  private isILLMError(error: unknown): error is ILLMError {
-    return typeof error === 'object' && error !== null && 'code' in error && 'message' in error;
+  private isILLMError(err: unknown): err is ILLMError {
+    return typeof err === 'object' && err !== null && 'code' in err && 'message' in err;
   }
 }
