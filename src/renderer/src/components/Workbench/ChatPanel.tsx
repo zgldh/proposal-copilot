@@ -3,7 +3,7 @@ import React from 'react';
 export const ChatPanel: React.FC = () => {
   return (
     <div style={{ 
-      height: '100%', 
+      height: '-webkit-fill-available', 
       display: 'flex', 
       flexDirection: 'column', 
       padding: '16px',
