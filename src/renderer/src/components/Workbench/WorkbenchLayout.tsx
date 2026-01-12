@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { Button } from 'antd';
+import { SettingOutlined } from '@ant-design/icons';
 import { IProjectData } from '../../../../shared/types';
 import { ChatPanel } from './ChatPanel';
 import { ContextPanel } from './ContextPanel';
+import { SettingsModal } from '../SettingsModal';
 
 interface IWorkbenchProps {
   project: IProjectData;
@@ -11,20 +14,31 @@ interface IWorkbenchProps {
 }
 
 export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project, projectPath, onSave }) => {
+  const [settingsVisible, setSettingsVisible] = useState(false);
+
   return (
     <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
       {/* Optional Header Area */}
-      <header style={{ 
-        padding: '0 16px', 
-        height: '40px', 
-        background: '#001529', 
-        color: 'white', 
-        display: 'flex', 
+      <header style={{
+        padding: '0 16px',
+        height: '40px',
+        background: '#001529',
+        color: 'white',
+        display: 'flex',
         alignItems: 'center',
+        justifyContent: 'space-between',
         fontSize: '14px'
       }}>
-        <span style={{ fontWeight: 'bold', marginRight: '10px' }}>Proposal Copilot</span>
-        <span style={{ opacity: 0.7 }}> - {project.meta.name} (v{project.meta.version})</span>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <span style={{ fontWeight: 'bold', marginRight: '10px' }}>Proposal Copilot</span>
+          <span style={{ opacity: 0.7 }}> - {project.meta.name} (v{project.meta.version})</span>
+        </div>
+        <Button
+          type="text"
+          icon={<SettingOutlined />}
+          onClick={() => setSettingsVisible(true)}
+          style={{ color: 'white' }}
+        />
       </header>
 
       {/* Main Split Content */}
@@ -54,6 +68,8 @@ export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project, projectPat
           </Panel>
         </PanelGroup>
       </div>
+
+      <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
     </div>
   );
 };
