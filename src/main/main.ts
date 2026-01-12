@@ -1,7 +1,11 @@
-import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { IBackendResponse } from '../shared/types';
 import { registerProjectHandlers } from './ipc/projectHandlers';
+import { registerConversationHandlers } from './ipc/conversationHandlers';
+import { registerSettingsHandlers } from './ipc/settingsHandlers';
+import { registerDocgenHandlers } from './ipc/docgenHandlers';
+import { SettingsManager } from './services/SettingsManager';
 
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow: BrowserWindow | null = null;
@@ -30,7 +34,7 @@ function createWindow(): void {
 }
 
 // IPC Handlers
-ipcMain.handle('check-backend-status', async (_event: IpcMainInvokeEvent): Promise<IBackendResponse> => {
+ipcMain.handle('check-backend-status', async (): Promise<IBackendResponse> => {
   return {
     status: 'ok',
     data: 'Node.js Backend Ready',
@@ -39,7 +43,11 @@ ipcMain.handle('check-backend-status', async (_event: IpcMainInvokeEvent): Promi
 });
 
 app.on('ready', () => {
+  SettingsManager.init();
   registerProjectHandlers();
+  registerConversationHandlers();
+  registerSettingsHandlers();
+  registerDocgenHandlers();
   createWindow();
 });
 

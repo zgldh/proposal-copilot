@@ -24,8 +24,9 @@ export class ProjectService {
     try {
       await fs.access(filePath);
       throw new Error(`A project already exists in this folder: ${filePath}`);
-    } catch (e: any) {
-      if (e.code !== 'ENOENT') throw e;
+    } catch (e: unknown) {
+      const error = e as NodeJS.ErrnoException;
+      if (error.code !== 'ENOENT') throw e;
     }
 
     const data = this.createInitialData(name);

@@ -6,19 +6,20 @@ import { ContextPanel } from './ContextPanel';
 
 interface IWorkbenchProps {
   project: IProjectData;
+  projectPath: string;
   onSave: (data: IProjectData) => Promise<void>;
 }
 
-export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project }) => {
+export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project, projectPath, onSave }) => {
   return (
     <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column' }}>
       {/* Optional Header Area */}
-      <header style={{ 
-        padding: '0 16px', 
-        height: '40px', 
-        background: '#001529', 
-        color: 'white', 
-        display: 'flex', 
+      <header style={{
+        padding: '0 16px',
+        height: '40px',
+        background: '#001529',
+        color: 'white',
+        display: 'flex',
         alignItems: 'center',
         fontSize: '14px'
       }}>
@@ -31,7 +32,12 @@ export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project }) => {
         <PanelGroup direction="horizontal">
           {/* LEFT PANEL: Chat */}
           <Panel defaultSize={30} minSize={20} order={1}>
-            <ChatPanel />
+            <ChatPanel projectPath={projectPath} onTreeUpdate={async () => {
+              const result = await window.electronAPI.loadProject(projectPath);
+              if (result.success && result.data) {
+                onSave(result.data);
+              }
+            }} />
           </Panel>
 
           {/* RESIZE HANDLE */}
@@ -44,7 +50,7 @@ export const WorkbenchLayout: React.FC<IWorkbenchProps> = ({ project }) => {
 
           {/* RIGHT PANEL: Context (Tree/Preview) */}
           <Panel minSize={30} order={2}>
-            <ContextPanel projectStructure={project.structure_tree} />
+            <ContextPanel projectStructure={project.structure_tree} projectPath={projectPath} />
           </Panel>
         </PanelGroup>
       </div>
