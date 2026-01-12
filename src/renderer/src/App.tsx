@@ -8,6 +8,9 @@ const App: React.FC = () => {
   const [projectPath, setProjectPath] = useState<string>('');
 
   const handleSave = async (data: IProjectData): Promise<void> => {
+    if (projectPath) {
+      await window.electronAPI.saveProject(projectPath, data);
+    }
     setProjectData(data);
   };
 
