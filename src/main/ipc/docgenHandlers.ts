@@ -4,10 +4,29 @@ import * as path from 'path';
 import { DocumentGenerator } from '../services/docgen/DocumentGenerator';
 import { IServiceResult, IProjectData } from '../../shared/types';
 
+function validateProjectPath(projectPath: string): void {
+  if (!projectPath || typeof projectPath !== 'string') {
+    throw new Error('Invalid project path');
+  }
+  if (projectPath.includes('..')) {
+    throw new Error('Path traversal detected');
+  }
+  const normalizedPath = path.normalize(projectPath);
+  if (!path.isAbsolute(normalizedPath)) {
+    throw new Error('Project path must be absolute');
+  }
+}
+
+async function loadProject(projectPath: string): Promise<IProjectData> {
+  validateProjectPath(projectPath);
+  const projectJson = await fs.readFile(path.join(projectPath, 'project.json'), 'utf-8');
+  return JSON.parse(projectJson) as IProjectData;
+}
+
 export function registerDocgenHandlers(): void {
   ipcMain.handle('docgen:export-word', async (_e, projectPath: string): Promise<IServiceResult<string>> => {
     try {
-      const projectData = JSON.parse(await fs.readFile(path.join(projectPath, 'project.json'), 'utf-8')) as IProjectData;
+      const projectData = await loadProject(projectPath);
 
       const result = await dialog.showSaveDialog({
         defaultPath: `${projectData.meta.name.replace(/\s+/g, '_')}.docx`,
@@ -27,7 +46,7 @@ export function registerDocgenHandlers(): void {
 
   ipcMain.handle('docgen:export-excel', async (_e, projectPath: string): Promise<IServiceResult<string>> => {
     try {
-      const projectData = JSON.parse(await fs.readFile(path.join(projectPath, 'project.json'), 'utf-8')) as IProjectData;
+      const projectData = await loadProject(projectPath);
 
       const result = await dialog.showSaveDialog({
         defaultPath: `${projectData.meta.name.replace(/\s+/g, '_')}.xlsx`,
