@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, IpcMainInvokeEvent } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import { IBackendResponse } from '../shared/types';
 import { registerProjectHandlers } from './ipc/projectHandlers';
@@ -30,7 +30,7 @@ function createWindow(): void {
 }
 
 // IPC Handlers
-ipcMain.handle('check-backend-status', async (_event: IpcMainInvokeEvent): Promise<IBackendResponse> => {
+ipcMain.handle('check-backend-status', async (): Promise<IBackendResponse> => {
   return {
     status: 'ok',
     data: 'Node.js Backend Ready',
