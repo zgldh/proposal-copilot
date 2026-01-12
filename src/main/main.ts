@@ -4,6 +4,7 @@ import { IBackendResponse } from '../shared/types';
 import { registerProjectHandlers } from './ipc/projectHandlers';
 import { registerConversationHandlers } from './ipc/conversationHandlers';
 import { registerSettingsHandlers } from './ipc/settingsHandlers';
+import { SettingsManager } from './services/SettingsManager';
 
 // Keep a global reference of the window object to prevent garbage collection
 let mainWindow: BrowserWindow | null = null;
@@ -41,6 +42,7 @@ ipcMain.handle('check-backend-status', async (): Promise<IBackendResponse> => {
 });
 
 app.on('ready', () => {
+  SettingsManager.init();
   registerProjectHandlers();
   registerConversationHandlers();
   registerSettingsHandlers();
