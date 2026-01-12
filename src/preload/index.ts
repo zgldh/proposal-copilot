@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { IBackendResponse, IProjectData, IServiceResult } from '../shared/types';
+import { IBackendResponse, IProjectData, IServiceResult, ISettings } from '../shared/types';
 import { IConversationMessage, ILLMResponseParsed } from '../main/services/conversation/types';
 import { LLMProviderType, ILLMConfig } from '../main/services/llm/types';
 
@@ -17,7 +17,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     clearHistory: (projectPath: string): Promise<IServiceResult<void>> => ipcRenderer.invoke('conversation:clear-history', projectPath),
   },
   settings: {
-    get: (): Promise<IServiceResult<any>> => ipcRenderer.invoke('settings:get'),
+    get: (): Promise<IServiceResult<ISettings>> => ipcRenderer.invoke('settings:get'),
     updateLLM: (provider: LLMProviderType, config: Partial<ILLMConfig>): Promise<IServiceResult<void>> => ipcRenderer.invoke('settings:update-llm', provider, config),
     setProvider: (provider: LLMProviderType): Promise<IServiceResult<void>> => ipcRenderer.invoke('settings:set-provider', provider),
   },

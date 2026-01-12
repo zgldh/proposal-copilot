@@ -1,19 +1,7 @@
 import { ipcMain } from 'electron';
 import { SettingsManager } from '../services/SettingsManager';
 import { LLMProviderType, ILLMConfig } from '../services/llm/types';
-import { IServiceResult } from '../../shared/types';
-
-interface ISettings {
-  llm: {
-    provider: LLMProviderType;
-    openai: ILLMConfig;
-    deepseek: ILLMConfig;
-    custom: ILLMConfig;
-  };
-  project: {
-    lastUsedPath?: string;
-  };
-}
+import { IServiceResult, ISettings } from '../../shared/types';
 
 /**
  * Registers IPC handlers for settings-related operations.

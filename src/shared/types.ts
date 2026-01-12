@@ -32,3 +32,24 @@ export interface IServiceResult<T> {
   data?: T;
   error?: string;
 }
+
+export type LLMProviderType = 'openai' | 'deepseek' | 'custom';
+
+export interface ILLMConfig {
+  apiKey?: string;
+  model?: string;
+  baseURL?: string;
+  temperature?: number;
+}
+
+export interface ISettings {
+  llm: {
+    provider: LLMProviderType;
+    openai: ILLMConfig;
+    deepseek: ILLMConfig;
+    custom: ILLMConfig;
+  };
+  project: {
+    lastUsedPath?: string;
+  };
+}
