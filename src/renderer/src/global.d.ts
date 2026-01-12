@@ -53,9 +53,8 @@ export interface IElectronAPI {
     setProvider: (provider: 'openai' | 'deepseek' | 'custom') => Promise<{ success: boolean; error?: string }>;
   };
   docgen: {
-    exportToWord: (projectPath: string, outputPath?: string) => Promise<{ success: boolean; data?: string; error?: string }>;
-    exportToExcel: (projectPath: string, outputPath?: string) => Promise<{ success: boolean; data?: string; error?: string }>;
-    saveAs: (projectPath: string, format: 'word' | 'excel') => Promise<{ success: boolean; data?: string; error?: string }>;
+    exportWord: (projectPath: string) => Promise<{ success: boolean; data?: string; error?: string }>;
+    exportExcel: (projectPath: string) => Promise<{ success: boolean; data?: string; error?: string }>;
   };
 }
 
