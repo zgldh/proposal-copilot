@@ -21,7 +21,7 @@ export class DocumentGenerator {
     return result;
   }
 
-  static async exportToWord(projectData: IProjectData, outputPath: string): Promise<void> {
+  static async generateWord(projectData: IProjectData, outputPath: string): Promise<void> {
     const flatNodes = this.flattenTree(projectData.structure_tree);
 
     const paragraphChildren = [
@@ -129,7 +129,7 @@ export class DocumentGenerator {
     await fs.writeFile(outputPath, buffer);
   }
 
-  static async exportToExcel(projectData: IProjectData, outputPath: string): Promise<void> {
+  static async generateExcel(projectData: IProjectData, outputPath: string): Promise<void> {
     const flatNodes = this.flattenTree(projectData.structure_tree);
 
     const workbook = new ExcelJS.Workbook();
