@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { IBackendResponse, IProjectData } from '../../../shared/types';
 
 interface IProjectManagerProps {
-  onProjectLoaded: (data: IProjectData) => void;
+  onProjectLoaded: (data: IProjectData, path: string) => void;
 }
 
 export const ProjectManager: React.FC<IProjectManagerProps> = ({ onProjectLoaded }) => {
@@ -45,7 +45,7 @@ export const ProjectManager: React.FC<IProjectManagerProps> = ({ onProjectLoaded
     const result = await window.electronAPI.createProject(projectPath, name);
     if (result.success && result.data) {
       setStatusMsg('Project created successfully.');
-      onProjectLoaded(result.data);
+      onProjectLoaded(result.data, projectPath);
     } else {
       setStatusMsg(`Create Failed: ${result.error}`);
     }
@@ -56,7 +56,7 @@ export const ProjectManager: React.FC<IProjectManagerProps> = ({ onProjectLoaded
     const result = await window.electronAPI.loadProject(projectPath);
     if (result.success && result.data) {
       setStatusMsg('Project loaded successfully.');
-      onProjectLoaded(result.data);
+      onProjectLoaded(result.data, projectPath);
     } else {
       setStatusMsg(`Load Failed: ${result.error}`);
     }
