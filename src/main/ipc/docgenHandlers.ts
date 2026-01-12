@@ -18,7 +18,7 @@ export function registerDocgenHandlers(): void {
         return { success: false, error: 'Save dialog canceled' };
       }
 
-      await DocumentGenerator.exportToWord(projectData, result.filePath);
+      await DocumentGenerator.generateWord(projectData, result.filePath);
       return { success: true, data: result.filePath };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
@@ -38,7 +38,7 @@ export function registerDocgenHandlers(): void {
         return { success: false, error: 'Save dialog canceled' };
       }
 
-      await DocumentGenerator.exportToExcel(projectData, result.filePath);
+      await DocumentGenerator.generateExcel(projectData, result.filePath);
       return { success: true, data: result.filePath };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error) };
