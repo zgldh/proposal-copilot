@@ -1,7 +1,7 @@
 ---
 id: TASK-2026-001
 title: "Initialize Project Framework (Electron + Python)"
-status: ready
+status: done
 priority: high
 type: chore
 estimate: 8h
@@ -14,6 +14,7 @@ arch_refs: [ARCH-app-proposal-copilot]
 risk: low
 audit_log:
   - {date: 2026-01-12, user: "@AI-DocArchitect", action: "created with status ready"}
+  - {date: 2026-01-12, user: "@AI-DocArchitect", action: "status: ready → done"}
 ---
 
 ## Description

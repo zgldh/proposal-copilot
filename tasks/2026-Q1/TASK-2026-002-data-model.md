@@ -17,7 +17,7 @@ audit_log:
 ---
 
 ## Description
-Implement the logic for creating, opening, and saving projects. Each project corresponds to a local folder. The core task is to define the `project.json` schema and implement the read/write operations in the application backend.
+Implement the logic for creating, opening, and saving projects. Each project corresponds to a local folder. The core task is to define the `project.json` schema and implement the read/write operations in the application backend (Electron Main process `src/main/main.ts`) using Node.js `fs`.
 
 ## Acceptance Criteria
 1.  User can select a directory to create a new project.

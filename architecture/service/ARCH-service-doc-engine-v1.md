@@ -4,11 +4,11 @@ title: "Intelligent Document Generation Engine"
 type: service
 layer: service
 owner: @team-backend
-version: v1
+version: v2
 status: planned
 created: 2026-01-12
 updated: 2026-01-12
-tags: [python, docx, excel, ai]
+tags: [nodejs, typescript, docx, excel, ai]
 depends_on: [ARCH-domain-project-structure]
 referenced_by: []
 ---
@@ -17,10 +17,10 @@ referenced_by: []
 The Document Engine is the core value proposition of Proposal-Copilot. It transforms the structured data from `project.json` and the unstructured intent from the user into professional-grade artifacts (Word, PDF, Excel). It utilizes a "No-Code Template" approach, relying on AI to mimic the style of reference documents rather than rigid placeholder replacement.
 
 ## Structure
-This component is implemented in Python to leverage mature libraries:
-*   **Docx Processing**: `python-docx` for reading reference styles and structure.
-*   **Data Processing**: `pandas` for Excel generation.
-*   **AI Glue**: Integration with LLM APIs to generate semantic content (HTML fragments) that fits specific sections of the document skeleton.
+This component is implemented in TypeScript (Node.js) within `src/main/main.ts` to maximize performance and integration:
+*   **Docx Processing**: Uses `docx` or similar JS libraries for reading reference styles and structure.
+*   **Data Processing**: Uses `exceljs` or `xlsx` for Excel generation.
+*   **AI Glue**: Direct Node.js integration with LLM APIs to generate semantic content.
 
 ## Behavior
 ### Word/PDF Export
@@ -35,8 +35,8 @@ This component is implemented in Python to leverage mature libraries:
 
 ## Evolution
 ### Planned
-*   Development of a Python bridge (REST API or Stdin/Stdout) to communicate with the Electron frontend.
-*   Optimization of HTML-to-Docx conversion to preserve reference formatting.
+*   Optimization of HTML-to-Docx conversion in Node.js to preserve reference formatting.
 
 ### Historical
+*   v2: Migrated from Python to Node.js.
 *   v1: Conceptual design.
