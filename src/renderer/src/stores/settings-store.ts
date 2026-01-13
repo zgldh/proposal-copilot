@@ -12,8 +12,6 @@ const DEFAULT_SETTINGS: Settings = {
   theme: 'dark'
 }
 
-const SETTINGS_FILE = 'settings.json'
-
 interface SettingsState {
   settings: Settings
   isLoading: boolean
@@ -29,10 +27,9 @@ function createSettingsStore() {
     subscribe,
 
     async load() {
-      update(state => ({ ...state, isLoading: true }))
+      update((state) => ({ ...state, isLoading: true }))
       try {
-        const content = await window.electronAPI.readFile(SETTINGS_FILE)
-        const settings = JSON.parse(content) as Settings
+        const settings = await window.electron.settings.read()
         set({ settings, isLoading: false })
       } catch (error) {
         console.log('Using default settings:', error)
@@ -42,14 +39,11 @@ function createSettingsStore() {
 
     async save() {
       const state = get({ subscribe })
-      await window.electronAPI.writeFile(
-        SETTINGS_FILE,
-        JSON.stringify(state.settings, null, 2)
-      )
+      await window.electron.settings.write(state.settings)
     },
 
     updateProvider(provider: Partial<LlmProvider>) {
-      update(state => {
+      update((state) => {
         const updatedProvider = { ...state.settings.llm_provider, ...provider }
         return {
           ...state,
@@ -59,7 +53,7 @@ function createSettingsStore() {
     },
 
     updateProviderApiKey(apiKey: string) {
-      update(state => ({
+      update((state) => ({
         ...state,
         settings: {
           ...state.settings,
@@ -69,7 +63,7 @@ function createSettingsStore() {
     },
 
     updateProviderBaseUrl(baseUrl: string) {
-      update(state => ({
+      update((state) => ({
         ...state,
         settings: {
           ...state.settings,
@@ -79,7 +73,7 @@ function createSettingsStore() {
     },
 
     updateProviderModel(model: string) {
-      update(state => ({
+      update((state) => ({
         ...state,
         settings: {
           ...state.settings,
@@ -89,17 +83,14 @@ function createSettingsStore() {
     },
 
     updateTheme(theme: 'light' | 'dark') {
-      update(state => ({
+      update((state) => ({
         ...state,
         settings: { ...state.settings, theme }
       }))
     },
 
     async reset() {
-      await window.electronAPI.writeFile(
-        SETTINGS_FILE,
-        JSON.stringify(DEFAULT_SETTINGS, null, 2)
-      )
+      await window.electron.settings.write(DEFAULT_SETTINGS)
       set({ settings: DEFAULT_SETTINGS, isLoading: false })
     }
   }

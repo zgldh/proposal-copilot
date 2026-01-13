@@ -1,4 +1,37 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
+interface LlmProvider {
+  id: string
+  name: string
+  type: 'openai' | 'deepseek' | 'custom'
+  api_key: string
+  base_url?: string
+  model: string
+}
+
+interface Settings {
+  llm_provider: LlmProvider
+  theme: 'light' | 'dark'
+}
+
+interface ProjectMeta {
+  name: string
+  create_time: string
+  version: string
+}
+
+interface TreeNode {
+  id: string
+  type: 'subsystem' | 'device' | 'feature'
+  name: string
+  specs: Record<string, string>
+  quantity: number
+  children: TreeNode[]
+}
+
+interface Project {
+  meta: ProjectMeta
+  context: string
+  structure_tree: TreeNode[]
+}
 
 declare global {
   interface Window {
@@ -8,9 +41,9 @@ declare global {
       dialogNewProject: () => Promise<string | null>
       dialogOpenProject: () => Promise<string | null>
       projectCreate: (path: string, name: string) => Promise<string>
-      projectRead: (path: string) => Promise<Record<string, unknown>>
-      settingsRead: () => Promise<Record<string, unknown>>
-      settingsWrite: (settings: Record<string, unknown>) => Promise<boolean>
+      projectRead: (path: string) => Promise<Project>
+      settingsRead: () => Promise<Settings>
+      settingsWrite: (settings: Settings) => Promise<boolean>
     }
     electron: {
       dialog: {
@@ -19,11 +52,11 @@ declare global {
       }
       project: {
         create: (path: string, name: string) => Promise<string>
-        read: (path: string) => Promise<Record<string, unknown>>
+        read: (path: string) => Promise<Project>
       }
       settings: {
-        read: () => Promise<Record<string, unknown>>
-        write: (settings: Record<string, unknown>) => Promise<boolean>
+        read: () => Promise<Settings>
+        write: (settings: Settings) => Promise<boolean>
       }
     }
   }

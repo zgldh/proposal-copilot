@@ -1,5 +1,19 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+interface LlmProvider {
+  id: string
+  name: string
+  type: 'openai' | 'deepseek' | 'custom'
+  api_key: string
+  base_url?: string
+  model: string
+}
+
+interface Settings {
+  llm_provider: LlmProvider
+  theme: 'light' | 'dark'
+}
+
 declare global {
   interface Window {
     electronAPI: {
@@ -9,8 +23,8 @@ declare global {
       dialogOpenProject: () => Promise<string | null>
       projectCreate: (path: string, name: string) => Promise<string>
       projectRead: (path: string) => Promise<Record<string, unknown>>
-      settingsRead: () => Promise<Record<string, unknown>>
-      settingsWrite: (settings: Record<string, unknown>) => Promise<boolean>
+      settingsRead: () => Promise<Settings>
+      settingsWrite: (settings: Settings) => Promise<boolean>
     }
     electron: {
       dialog: {
@@ -22,8 +36,8 @@ declare global {
         read: (path: string) => Promise<Record<string, unknown>>
       }
       settings: {
-        read: () => Promise<Record<string, unknown>>
-        write: (settings: Record<string, unknown>) => Promise<boolean>
+        read: () => Promise<Settings>
+        write: (settings: Settings) => Promise<boolean>
       }
     }
   }
@@ -33,13 +47,16 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electronAPI', {
       readFile: (path: string) => ipcRenderer.invoke('fs:readFile', path),
-      writeFile: (path: string, content: string) => ipcRenderer.invoke('fs:writeFile', path, content),
+      writeFile: (path: string, content: string) =>
+        ipcRenderer.invoke('fs:writeFile', path, content),
       dialogNewProject: () => ipcRenderer.invoke('dialog:newProject'),
       dialogOpenProject: () => ipcRenderer.invoke('dialog:openProject'),
-      projectCreate: (path: string, name: string) => ipcRenderer.invoke('project:create', path, name),
+      projectCreate: (path: string, name: string) =>
+        ipcRenderer.invoke('project:create', path, name),
       projectRead: (path: string) => ipcRenderer.invoke('project:read', path),
-      settingsRead: () => ipcRenderer.invoke('settings:read'),
-      settingsWrite: (settings: Record<string, unknown>) => ipcRenderer.invoke('settings:write', settings)
+      settingsRead: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
+      settingsWrite: (settings: Settings) =>
+        ipcRenderer.invoke('settings:write', settings) as Promise<boolean>
     })
 
     contextBridge.exposeInMainWorld('electron', {
@@ -52,8 +69,9 @@ if (process.contextIsolated) {
         read: (path: string) => ipcRenderer.invoke('project:read', path)
       },
       settings: {
-        read: () => ipcRenderer.invoke('settings:read'),
-        write: (settings: Record<string, unknown>) => ipcRenderer.invoke('settings:write', settings)
+        read: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
+        write: (settings: Settings) =>
+          ipcRenderer.invoke('settings:write', settings) as Promise<boolean>
       }
     })
   } catch (error) {
@@ -67,7 +85,8 @@ if (process.contextIsolated) {
     dialogOpenProject: () => ipcRenderer.invoke('dialog:openProject'),
     projectCreate: (path: string, name: string) => ipcRenderer.invoke('project:create', path, name),
     projectRead: (path: string) => ipcRenderer.invoke('project:read', path),
-    settingsRead: () => ipcRenderer.invoke('settings:read'),
-    settingsWrite: (settings: Record<string, unknown>) => ipcRenderer.invoke('settings:write', settings)
+    settingsRead: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
+    settingsWrite: (settings: Settings) =>
+      ipcRenderer.invoke('settings:write', settings) as Promise<boolean>
   }
 }

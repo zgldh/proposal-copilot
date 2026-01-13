@@ -35,10 +35,9 @@ function createProjectStore() {
     subscribe,
 
     loadProject: async (path: string) => {
-      update(state => ({ ...state, isLoading: true }))
+      update((state) => ({ ...state, isLoading: true }))
       try {
-        const content = await window.electronAPI.readFile(path)
-        const project = JSON.parse(content) as Project
+        const project = await window.electron.project.read(path)
         set({
           currentProject: project,
           projectPath: path,
@@ -64,16 +63,16 @@ function createProjectStore() {
           createTreeNode('subsystem', 'Power')
         ]
       }
-      await window.electronAPI.writeFile(path, JSON.stringify(newProject, null, 2))
+      const projectJsonPath = await window.electron.project.create(path, name)
       set({
         currentProject: newProject,
-        projectPath: path,
+        projectPath: projectJsonPath,
         isDirty: false
       })
     },
 
     updateProject: (updates: Partial<Project>) => {
-      update(state => {
+      update((state) => {
         if (!state.currentProject) return state
         const updatedProject = { ...state.currentProject, ...updates }
         return {
@@ -85,7 +84,7 @@ function createProjectStore() {
     },
 
     updateMeta: (meta: Partial<Project['meta']>) => {
-      update(state => {
+      update((state) => {
         if (!state.currentProject) return state
         const updatedProject = {
           ...state.currentProject,
@@ -100,7 +99,7 @@ function createProjectStore() {
     },
 
     updateContext: (context: string) => {
-      update(state => {
+      update((state) => {
         if (!state.currentProject) return state
         const updatedProject = { ...state.currentProject, context }
         return {
@@ -112,7 +111,7 @@ function createProjectStore() {
     },
 
     addTreeNode: (parentId: string | null, type: TreeNode['type'], name: string) => {
-      update(state => {
+      update((state) => {
         if (!state.currentProject) return state
 
         const newNode = createTreeNode(type, name)
@@ -129,7 +128,7 @@ function createProjectStore() {
         }
 
         function findAndAdd(parentNodes: TreeNode[]): TreeNode[] {
-          return parentNodes.map(node => {
+          return parentNodes.map((node) => {
             if (node.id === parentId) {
               return { ...node, children: [...node.children, newNode] }
             }
@@ -152,11 +151,11 @@ function createProjectStore() {
     },
 
     updateTreeNode: (nodeId: string, updates: Partial<TreeNode>) => {
-      update(state => {
+      update((state) => {
         if (!state.currentProject) return state
 
         function findAndUpdate(nodes: TreeNode[]): TreeNode[] {
-          return nodes.map(node => {
+          return nodes.map((node) => {
             if (node.id === nodeId) {
               return { ...node, ...updates }
             }
@@ -179,12 +178,13 @@ function createProjectStore() {
     },
 
     removeTreeNode: (nodeId: string) => {
-      update(state => {
+      update((state) => {
         if (!state.currentProject) return state
 
         function findAndRemove(nodes: TreeNode[]): TreeNode[] {
-          return nodes.filter(node => node.id !== nodeId)
-            .map(node => ({
+          return nodes
+            .filter((node) => node.id !== nodeId)
+            .map((node) => ({
               ...node,
               children: node.children.length > 0 ? findAndRemove(node.children) : []
             }))
@@ -208,7 +208,7 @@ function createProjectStore() {
         state.projectPath,
         JSON.stringify(state.currentProject, null, 2)
       )
-      update(s => ({ ...s, isDirty: false }))
+      update((s) => ({ ...s, isDirty: false }))
     },
 
     clear: () => {

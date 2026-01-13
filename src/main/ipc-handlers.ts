@@ -39,32 +39,43 @@ export interface Settings {
 }
 
 export function setupProjectHandlers(mainWindow: BrowserWindow) {
-  ipcMain.handle('dialog:new-project', async () => {
+  ipcMain.handle('fs:readFile', async (_event, path: string) => {
+    if (!existsSync(path)) {
+      throw new Error('File not found')
+    }
+    return readFileSync(path, 'utf-8')
+  })
+
+  ipcMain.handle('fs:writeFile', async (_event, path: string, content: string) => {
+    writeFileSync(path, content, 'utf-8')
+  })
+
+  ipcMain.handle('dialog:newProject', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Create New Project',
       buttonLabel: 'Select Folder',
       properties: ['openDirectory']
     })
-    
+
     if (result.canceled || result.filePaths.length === 0) {
       return null
     }
-    
+
     return result.filePaths[0]
   })
 
-  ipcMain.handle('dialog:open-project', async () => {
+  ipcMain.handle('dialog:openProject', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Open Project',
       buttonLabel: 'Open',
       properties: ['openDirectory', 'openFile'],
       filters: [{ name: 'Project JSON', extensions: ['json'] }]
     })
-    
+
     if (result.canceled || result.filePaths.length === 0) {
       return null
     }
-    
+
     return result.filePaths[0]
   })
 
@@ -78,20 +89,20 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
       context: '',
       structure_tree: []
     }
-    
+
     const projectJsonPath = join(projectPath, 'project.json')
     writeFileSync(projectJsonPath, JSON.stringify(project, null, 2))
-    
+
     return projectJsonPath
   })
 
   ipcMain.handle('project:read', async (_event, path: string) => {
     const projectJsonPath = path.endsWith('project.json') ? path : join(path, 'project.json')
-    
+
     if (!existsSync(projectJsonPath)) {
       throw new Error('project.json not found')
     }
-    
+
     const content = readFileSync(projectJsonPath, 'utf-8')
     return JSON.parse(content)
   })
@@ -115,7 +126,7 @@ function readSettings(): Settings {
     writeFileSync(SETTINGS_PATH, JSON.stringify(defaultSettings, null, 2))
     return defaultSettings
   }
-  
+
   const content = readFileSync(SETTINGS_PATH, 'utf-8')
   return JSON.parse(content)
 }
