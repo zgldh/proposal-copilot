@@ -2,13 +2,17 @@
   import { onMount } from 'svelte'
   import { projectStore } from '$stores/project-store'
   import { settingsStore } from '$stores/settings-store'
+  import { chatStore } from '$stores/chat-store'
   import HomeView from './HomeView.svelte'
   import NewProjectDialog from './NewProjectDialog.svelte'
   import OpenProjectDialog from './OpenProjectDialog.svelte'
   import SettingsView from './SettingsView.svelte'
+  import SplitPane from './SplitPane.svelte'
+  import ChatPanel from './ChatPanel.svelte'
+  import MarkdownPreview from './MarkdownPreview.svelte'
   import electronLogo from '../assets/electron.svg'
 
-  type View = 'home' | 'settings'
+  type View = 'home' | 'settings' | 'chat'
 
   let currentView: View = 'home'
   let showNewProjectDialog = false
@@ -19,9 +23,14 @@
   })
 
   $: projectName = $projectStore.currentProject?.meta.name
+  $: hasProject = !!$projectStore.currentProject
 
   function goHome() {
     currentView = 'home'
+  }
+
+  function openChat() {
+    currentView = 'chat'
   }
 
   function openNewProjectDialog() {
@@ -39,13 +48,32 @@
   async function handleNewProject(event: CustomEvent<{ name: string; path: string }>) {
     showNewProjectDialog = false
     await projectStore.newProject(event.detail.name, event.detail.path)
-    currentView = 'home'
+    chatStore.clear()
+    currentView = 'chat'
   }
 
   async function handleOpenProject(event: CustomEvent<{ path: string }>) {
     showOpenProjectDialog = false
     await projectStore.loadProject(event.detail.path)
-    currentView = 'home'
+    chatStore.clear()
+    currentView = 'chat'
+  }
+
+  async function handleSendMessage(content: string) {
+    chatStore.addUserMessage(content)
+    chatStore.setLoading(true)
+    
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const responses = [
+      `好的，我已经了解您的需求。我将为您创建一个包含以下内容的项目方案：\n\n**系统架构**\n- 前端：使用现代 Web 技术栈\n- 后端：基于 Node.js 的服务\n- 数据库：PostgreSQL\n\n**主要功能**\n1. 用户管理模块\n2. 数据处理模块\n3. 报告生成模块\n\n还有其他需要调整的地方吗？`,
+      `理解了！我正在为您规划项目结构。\n\n根据您的描述，我建议采用以下设计：\n\n**技术选型**\n- 框架：Svelte + Electron\n- 样式：CSS 变量主题\n- 构建：Vite\n\n**模块划分**\n- 核心模块\n- UI 组件库\n- 业务逻辑层\n\n如需修改或补充，请告诉我。`,
+      `好的，我已经记录下您的需求。\n\n**项目概要**\n- 项目类型：标准提案生成工具\n- 目标用户：企业用户\n- 核心价值：提高提案制作效率\n\n接下来我将生成详细的技术方案文档。`
+    ]
+    
+    const randomResponse = responses[Math.floor(Math.random() * responses.length)]
+    chatStore.addAssistantMessage(randomResponse)
+    chatStore.setLoading(false)
   }
 
   function closeNewProjectDialog() {
@@ -77,6 +105,15 @@
       >
         Home
       </button>
+      {#if hasProject}
+        <button
+          class="nav-button"
+          class:active={currentView === 'chat'}
+          onclick={openChat}
+        >
+          Chat
+        </button>
+      {/if}
       <button
         class="nav-button"
         class:active={currentView === 'settings'}
@@ -93,6 +130,21 @@
         on:new-project={openNewProjectDialog}
         on:open-project={openOpenProjectDialog}
         on:open-settings={openSettings}
+      />
+    {:else if currentView === 'chat'}
+      <SplitPane
+        minRatio={0.3}
+        maxRatio={0.7}
+        defaultRatio={0.5}
+        left={() => ({
+          render: () => ChatPanel({ 
+            messages: $chatStore.messages, 
+            onsend: handleSendMessage 
+          })
+        })}
+        right={() => ({
+          render: () => MarkdownPreview({ project: $projectStore.currentProject })
+        })}
       />
     {:else if currentView === 'settings'}
       <SettingsView />
