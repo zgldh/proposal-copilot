@@ -15,32 +15,36 @@ An AI agent to help Sales, Engineers, Account Owners provide great proposals and
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+
 - npm or yarn
 
-### Installation
+## Project Setup
+
+### Install
 
 ```bash
-npm install
+$ npm install
 ```
 
 ### Development
 
 ```bash
-npm run dev
+$ npm run dev
 ```
 
 ### Build
 
 ```bash
-npm run build
+# For windows
+$ npm run build:win
+
+# For macOS
+$ npm run build:mac
+
+# For Linux
+$ npm run build:linux
 ```
 
-### Linting
-
-```bash
-npm run lint
-```
 
 ## Configuration
 

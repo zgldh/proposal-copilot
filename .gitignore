@@ -2,14 +2,5 @@ node_modules
 dist
 out
 .DS_Store
-
-# Python
-venv/
-__pycache__/
-*.py[cod]
-
-# Local env
-.env
-
-# Git worktrees
-.worktrees/
+.eslintcache
+*.log*
