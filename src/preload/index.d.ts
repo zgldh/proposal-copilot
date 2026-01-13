@@ -1,3 +1,7 @@
+declare module 'marked' {
+  export function parse(markdown: string): string
+}
+
 interface LlmProvider {
   id: string
   name: string
