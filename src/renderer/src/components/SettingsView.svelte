@@ -27,12 +27,38 @@
 
   let isTesting = $state(false)
 
+  let ollamaModels: string[] = $state([])
+  let isLoadingModels = $state(false)
+
   $effect(() => {
     // Sync form when selection changes or store loads
     if (settings.providers[selectedProviderId]) {
       formConfig = { ...settings.providers[selectedProviderId] }
     } else if (providers.length > 0) {
       selectedProviderId = providers[0].id
+    }
+  })
+
+  async function fetchOllamaModels() {
+    if (formConfig.id !== 'ollama') return
+    
+    isLoadingModels = true
+    try {
+      const models = await window.electronAPI.ai.ollama.getModels(formConfig.base_url || 'http://localhost:11434')
+      ollamaModels = models
+      if (models.length > 0 && !formConfig.model) {
+        formConfig.model = models[0]
+      }
+    } catch (e) {
+      toast.error('Failed to load Ollama models')
+    } finally {
+      isLoadingModels = false
+    }
+  }
+
+  $effect(() => {
+    if (selectedProviderId === 'ollama') {
+      fetchOllamaModels()
     }
   })
 
@@ -104,8 +130,23 @@
 
     <div class="form-group">
       <label for="model">Model Name</label>
-      <input id="model" type="text" bind:value={formConfig.model} />
-      <p class="hint">e.g. gpt-4, deepseek-chat, llama2</p>
+      {#if formConfig.id === 'ollama'}
+        <div class="model-select-row">
+          <select id="model" bind:value={formConfig.model} disabled={isLoadingModels}>
+            {#if ollamaModels.length === 0}
+               <option value="" disabled>No models found (Check connection)</option>
+            {/if}
+            {#each ollamaModels as model}
+              <option value={model}>{model}</option>
+            {/each}
+            <option value={formConfig.model} hidden>{formConfig.model}</option>
+          </select>
+          <button class="icon-button" onclick={fetchOllamaModels} title="Refresh Models">↻</button>
+        </div>
+      {:else}
+        <input id="model" type="text" bind:value={formConfig.model} />
+        <p class="hint">e.g. gpt-4, deepseek-chat, llama2</p>
+      {/if}
     </div>
 
     <div class="form-group">
@@ -311,5 +352,26 @@
 
   .save-button:hover {
     background-color: var(--ev-c-primary-soft);
+  }
+
+  .model-select-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+  select {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    background-color: var(--color-background-input);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--color-text);
+  }
+  .icon-button {
+    padding: 0 10px;
+    background: var(--color-background-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--color-text);
   }
 </style>

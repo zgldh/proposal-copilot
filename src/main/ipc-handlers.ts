@@ -132,7 +132,7 @@ function readSettings(): Settings {
 
     // Map legacy values to the appropriate provider in new structure
     const targetId =
-      legacy.type === 'deepseek' ? 'deepseek' : legacy.type === 'custom' ? 'custom' : 'openai'
+      legacy.type === 'deepseek' ? 'deepseek' : legacy.type === 'custom' ? 'ollama' : 'openai'
 
     defaultSettings.active_provider_id = targetId
     defaultSettings.theme = raw.theme || 'light'
@@ -172,12 +172,12 @@ function createDefaultSettings(): Settings {
         base_url: 'https://api.deepseek.com',
         model: 'deepseek-chat'
       },
-      custom: {
-        id: 'custom',
-        name: 'Custom (Ollama)',
-        api_key: 'sk-placeholder',
-        base_url: 'http://localhost:11434/v1',
-        model: 'llama3'
+      ollama: {
+        id: 'ollama',
+        name: 'Ollama (Local)',
+        api_key: 'ollama',
+        base_url: 'http://localhost:11434',
+        model: ''
       }
     }
   }

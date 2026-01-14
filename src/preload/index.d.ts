@@ -61,6 +61,9 @@ declare global {
         onStreamChunk: (callback: (chunk: string) => void) => () => void
         onStreamComplete: (callback: () => void) => () => void
         onStreamError: (callback: (error: string) => void) => () => void
+        ollama: {
+          getModels: (baseUrl: string) => Promise<string[]>
+        }
       }
     }
     electron: {

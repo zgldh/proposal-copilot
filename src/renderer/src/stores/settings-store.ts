@@ -19,12 +19,12 @@ const DEFAULT_SETTINGS: Settings = {
       base_url: 'https://api.deepseek.com',
       model: 'deepseek-chat'
     },
-    custom: {
-      id: 'custom',
-      name: 'Custom (Ollama)',
-      api_key: 'sk-placeholder',
-      base_url: 'http://localhost:11434/v1',
-      model: 'llama3'
+    ollama: {
+      id: 'ollama',
+      name: 'Ollama (Local)',
+      api_key: 'ollama',
+      base_url: 'http://localhost:11434',
+      model: ''
     }
   }
 }

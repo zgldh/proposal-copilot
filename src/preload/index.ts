@@ -38,6 +38,9 @@ declare global {
         onStreamChunk: (callback: (chunk: string) => void) => () => void
         onStreamComplete: (callback: () => void) => () => void
         onStreamError: (callback: (error: string) => void) => () => void
+        ollama: {
+          getModels: (baseUrl: string) => Promise<string[]>
+        }
       }
     }
     electron: {
@@ -92,6 +95,9 @@ if (process.contextIsolated) {
           const subscription = (_: unknown, error: string) => callback(error)
           ipcRenderer.on('ai:stream-error', subscription)
           return () => ipcRenderer.removeListener('ai:stream-error', subscription)
+        },
+        ollama: {
+          getModels: (baseUrl: string) => ipcRenderer.invoke('ai:ollama:getModels', baseUrl)
         }
       }
     })
@@ -146,6 +152,9 @@ if (process.contextIsolated) {
         const subscription = (_: unknown, error: string) => callback(error)
         ipcRenderer.on('ai:stream-error', subscription)
         return () => ipcRenderer.removeListener('ai:stream-error', subscription)
+      },
+      ollama: {
+        getModels: (baseUrl: string) => ipcRenderer.invoke('ai:ollama:getModels', baseUrl)
       }
     }
   }

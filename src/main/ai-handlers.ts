@@ -1,14 +1,19 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import { OpenAIService } from './services/openai-service'
 import { DeepSeekService } from './services/deepseek-service'
+import { OllamaService } from './services/ollama-service'
 import type { LLMConfig, ChatMessage } from './services/llm-types'
 
 const openAIService = new OpenAIService()
 const deepSeekService = new DeepSeekService()
+const ollamaService = new OllamaService()
 
 function getProvider(config: LLMConfig) {
   if (config.id === 'deepseek') {
     return deepSeekService
+  }
+  if (config.id === 'ollama' || config.id === 'custom') {
+    return ollamaService
   }
   return openAIService
 }
@@ -42,5 +47,9 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
       }
       throw error
     }
+  })
+
+  ipcMain.handle('ai:ollama:getModels', async (_event, baseUrl: string) => {
+    return await ollamaService.getAvailableModels(baseUrl || 'http://localhost:11434')
   })
 }

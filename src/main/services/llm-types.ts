@@ -16,3 +16,11 @@ export interface LLMProvider {
   stream(messages: ChatMessage[], config: LLMConfig, onChunk: (chunk: string) => void): Promise<void>
   testConnection(config: LLMConfig): Promise<boolean>
 }
+
+export interface OllamaModelResponse {
+  models: Array<{
+    name: string
+    modified_at: string
+    size: number
+  }>
+}
