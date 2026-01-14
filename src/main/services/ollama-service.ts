@@ -59,7 +59,10 @@ export class OllamaService implements LLMProvider {
   async testConnection(config: LLMConfig): Promise<boolean> {
     try {
       const baseUrl = (config.base_url || 'http://localhost:11434').replace(/\/v1\/?$/, '')
-      const response = await fetch(`${baseUrl}/`)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000)
+      const response = await fetch(`${baseUrl}/`, { signal: controller.signal })
+      clearTimeout(timeoutId)
       return response.ok
     } catch (e) {
       return false

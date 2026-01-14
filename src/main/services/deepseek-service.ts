@@ -46,7 +46,7 @@ export class DeepSeekService implements LLMProvider {
 
   async testConnection(config: LLMConfig): Promise<boolean> {
     const client = this.createClient(config)
-    await client.models.list()
+    await client.models.list({ timeout: 5000 })
     return true
   }
 }

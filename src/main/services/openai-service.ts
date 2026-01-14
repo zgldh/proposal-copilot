@@ -47,7 +47,7 @@ export class OpenAIService implements LLMProvider {
   async testConnection(config: LLMConfig): Promise<boolean> {
     const client = this.createClient(config)
     // Simple call to list models to verify connectivity and auth
-    await client.models.list()
+    await client.models.list({ timeout: 5000 })
     return true
   }
 }

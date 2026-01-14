@@ -76,7 +76,7 @@
   async function testConnection() {
     isTesting = true
     try {
-      const success = await window.electronAPI.ai.testConnection(formConfig)
+      const success = await window.electronAPI.ai.testConnection({ ...formConfig })
       if (success) toast.success('Connection successful')
       else toast.error('Connection failed: Check API Key or Network')
     } catch (e) {
@@ -154,7 +154,11 @@
       <div class="api-key-row">
         <input id="api-key" type="password" bind:value={formConfig.api_key} />
         <button class="test-button" onclick={testConnection} disabled={isTesting}>
-          {isTesting ? '...' : 'Test'}
+          {#if isTesting}
+            <div class="spinner"></div>
+          {:else}
+            Test
+          {/if}
         </button>
       </div>
     </div>
@@ -321,10 +325,27 @@
     color: var(--ev-c-text-2);
     cursor: pointer;
     white-space: nowrap;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .test-button:hover:not(:disabled) {
     background: var(--ev-c-gray-3);
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--ev-c-text-2);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .hint {
