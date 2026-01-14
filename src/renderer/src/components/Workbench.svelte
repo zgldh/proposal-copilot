@@ -7,7 +7,6 @@
   import { toast } from '$stores/toast-store'
   import HomeView from './HomeView.svelte'
   import NewProjectDialog from './NewProjectDialog.svelte'
-  import OpenProjectDialog from './OpenProjectDialog.svelte'
   import SettingsView from './SettingsView.svelte'
   import SplitPane from './SplitPane.svelte'
   import ChatPanel from './ChatPanel.svelte'
@@ -16,7 +15,6 @@
   import ToastContainer from './ToastContainer.svelte'
 
   let showNewProjectDialog = $state(false)
-  let showOpenProjectDialog = $state(false)
   let activeTab = $derived($workbenchStore.tabs.find((t) => t.id === $workbenchStore.activeTabId))
 
   onMount(() => {
@@ -76,16 +74,16 @@
     })
   }
 
-  async function handleOpenProject(event: CustomEvent<{ path: string }>) {
-    showOpenProjectDialog = false
-    // Load logic happens in handleTabSwitch, we just create the tab here
-    const name = event.detail.path.split(/[/\\]/).pop() || 'Project'
-
-    workbenchStore.openTab({
-      type: 'project',
-      title: name,
-      path: event.detail.path
-    })
+  async function triggerOpenProject() {
+    const path = await window.electron.dialog.openProject()
+    if (path) {
+      const name = path.split(/[/\\]/).pop() || 'Project'
+      workbenchStore.openTab({
+        type: 'project',
+        title: name,
+        path
+      })
+    }
   }
 
   async function handleSendMessage(content: string) {
@@ -103,10 +101,6 @@
   function closeNewProjectDialog() {
     showNewProjectDialog = false
   }
-
-  function closeOpenProjectDialog() {
-    showOpenProjectDialog = false
-  }
 </script>
 
 <div class="workbench">
@@ -117,7 +111,7 @@
     {#if activeTab?.type === 'home'}
       <HomeView
         on:new-project={() => (showNewProjectDialog = true)}
-        on:open-project={() => (showOpenProjectDialog = true)}
+        on:open-project={triggerOpenProject}
         on:open-settings={() => workbenchStore.openTab({ type: 'settings', title: 'Settings' })}
       />
     {:else if activeTab?.type === 'settings'}
@@ -151,11 +145,6 @@
     on:cancel={closeNewProjectDialog}
   />
 
-  <OpenProjectDialog
-    isOpen={showOpenProjectDialog}
-    on:confirm={handleOpenProject}
-    on:cancel={closeOpenProjectDialog}
-  />
 </div>
 
 <style>
