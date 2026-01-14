@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { setupProjectHandlers, setupSettingsHandlers } from './ipc-handlers'
+import { setupAIHandlers } from './ai-handlers'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -35,6 +36,7 @@ function createWindow(): void {
   }
 
   setupProjectHandlers(mainWindow)
+  setupAIHandlers(mainWindow)
 }
 
 app.whenReady().then(() => {

@@ -10,6 +10,11 @@ interface ProviderConfig {
   model: string
 }
 
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant'
+  content: string
+}
+
 interface Settings {
   theme: 'light' | 'dark'
   active_provider_id: string
@@ -49,6 +54,14 @@ declare global {
       projectRead: (path: string) => Promise<Project>
       settingsRead: () => Promise<Settings>
       settingsWrite: (settings: Settings) => Promise<boolean>
+      ai: {
+        testConnection: (config: ProviderConfig) => Promise<boolean>
+        chat: (messages: ChatMessage[], config: ProviderConfig) => Promise<string>
+        streamChat: (messages: ChatMessage[], config: ProviderConfig) => Promise<void>
+        onStreamChunk: (callback: (chunk: string) => void) => () => void
+        onStreamComplete: (callback: () => void) => () => void
+        onStreamError: (callback: (error: string) => void) => () => void
+      }
     }
     electron: {
       dialog: {

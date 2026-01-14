@@ -25,6 +25,8 @@
     model: ''
   })
 
+  let isTesting = $state(false)
+
   $effect(() => {
     // Sync form when selection changes or store loads
     if (settings.providers[selectedProviderId]) {
@@ -43,6 +45,19 @@
     settingsStore.setActiveProvider(selectedProviderId)
     await settingsStore.save()
     toast.success('Settings saved successfully')
+  }
+
+  async function testConnection() {
+    isTesting = true
+    try {
+      const success = await window.electronAPI.ai.testConnection(formConfig)
+      if (success) toast.success('Connection successful')
+      else toast.error('Connection failed: Check API Key or Network')
+    } catch (e) {
+      toast.error('Connection error: ' + String(e))
+    } finally {
+      isTesting = false
+    }
   }
 </script>
 
@@ -95,7 +110,12 @@
 
     <div class="form-group">
       <label for="api-key">API Key</label>
-      <input id="api-key" type="password" bind:value={formConfig.api_key} />
+      <div class="api-key-row">
+        <input id="api-key" type="password" bind:value={formConfig.api_key} />
+        <button class="test-button" onclick={testConnection} disabled={isTesting}>
+          {isTesting ? '...' : 'Test'}
+        </button>
+      </div>
     </div>
 
     <div class="form-group">
@@ -244,6 +264,26 @@
 
   .form-group input:focus {
     border-color: var(--ev-c-primary);
+  }
+
+  .api-key-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .test-button {
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    background: var(--color-background-soft);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    color: var(--ev-c-text-2);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .test-button:hover:not(:disabled) {
+    background: var(--ev-c-gray-3);
   }
 
   .hint {
