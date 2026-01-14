@@ -133,8 +133,8 @@
     padding: 0.75rem 1rem;
     font-size: 0.9375rem;
     color: var(--color-text);
-    background-color: var(--color-background-mute);
-    border: 1px solid var(--ev-c-gray-2);
+    background-color: var(--color-background-input);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     outline: none;
     transition: border-color 0.2s;

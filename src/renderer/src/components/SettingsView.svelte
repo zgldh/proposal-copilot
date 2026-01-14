@@ -190,11 +190,11 @@
   }
 
   .provider-item:hover {
-    background: var(--ev-c-gray-3);
+    background: var(--color-background-soft);
   }
 
   .provider-item.active {
-    background: var(--ev-c-gray-3);
+    background: var(--color-background-soft);
     color: var(--color-text);
     font-weight: 500;
   }
@@ -235,8 +235,8 @@
     padding: 0.625rem 0.875rem;
     font-size: 0.9375rem;
     color: var(--color-text);
-    background-color: var(--color-background);
-    border: 1px solid var(--ev-c-gray-2);
+    background-color: var(--color-background-input);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     transition: border-color 0.2s;
   }

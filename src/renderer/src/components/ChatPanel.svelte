@@ -176,7 +176,9 @@
   .input-area textarea {
     flex: 1;
     padding: 0.75rem;
-    border: 1px solid var(--ev-c-gray-2, #ddd);
+    background-color: var(--color-background-input);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     resize: none;
     font-size: 0.9375rem;

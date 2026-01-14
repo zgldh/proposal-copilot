@@ -97,23 +97,23 @@
   }
 
   .action-button.secondary {
-    background-color: var(--ev-c-gray-3);
-    color: var(--color-text);
-    border: 1px solid var(--ev-c-gray-2);
+    background-color: var(--color-btn-secondary-bg);
+    color: var(--color-btn-secondary-text);
+    border: 1px solid var(--color-btn-secondary-border);
   }
 
   .action-button.secondary:hover {
-    background-color: var(--ev-c-gray-2);
+    background-color: var(--color-btn-secondary-hover-bg);
   }
 
   .action-button.tertiary {
     background-color: transparent;
-    color: var(--ev-c-text-2);
-    border: 1px solid var(--ev-c-gray-2);
+    color: var(--color-text-secondary);
+    border: 1px solid transparent;
   }
 
   .action-button.tertiary:hover {
-    background-color: var(--ev-c-gray-3);
+    background-color: var(--color-background-soft);
     color: var(--color-text);
   }
 </style>

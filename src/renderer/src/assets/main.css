@@ -18,6 +18,7 @@ code {
   padding: 3px 5px;
   border-radius: 2px;
   background-color: var(--color-background-mute);
+  color: var(--color-text);
   font-family:
     ui-monospace,
     SFMono-Regular,
