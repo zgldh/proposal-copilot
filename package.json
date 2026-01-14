@@ -1,5 +1,5 @@
 {
-  "name": "proposal-copilo",
+  "name": "proposal-copilot",
   "version": "1.0.0",
   "description": "An AI agent to help Sales, Engineers, Account Owners to provide great proposals, estimations to your clients.",
   "main": "./out/main/index.js",

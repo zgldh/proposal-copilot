@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: proposal-copilo
+productName: proposal-copilot
 directories:
   buildResources: build
 files:
@@ -13,7 +13,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: proposal-copilo
+  executableName: proposal-copilot
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
