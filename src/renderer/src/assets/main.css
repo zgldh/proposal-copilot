@@ -1,13 +1,16 @@
 @import './base.css';
 
+html,
 body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden; /* Prevent global scrollbar */
   background-image: url('./wavy-lines.svg');
   background-size: cover;
-  user-select: none;
 }
 
 code {
@@ -27,11 +30,10 @@ code {
 }
 
 #app {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  margin-bottom: 80px;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .logo {

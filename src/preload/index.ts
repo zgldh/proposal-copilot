@@ -19,6 +19,7 @@ declare global {
     electronAPI: {
       readFile: (path: string) => Promise<string>
       writeFile: (path: string, content: string) => Promise<void>
+      isDirectoryEmpty: (path: string) => Promise<boolean>
       dialogNewProject: () => Promise<string | null>
       dialogOpenProject: () => Promise<string | null>
       projectCreate: (path: string, name: string) => Promise<string>
@@ -49,6 +50,7 @@ if (process.contextIsolated) {
       readFile: (path: string) => ipcRenderer.invoke('fs:readFile', path),
       writeFile: (path: string, content: string) =>
         ipcRenderer.invoke('fs:writeFile', path, content),
+      isDirectoryEmpty: (path: string) => ipcRenderer.invoke('fs:isDirectoryEmpty', path),
       dialogNewProject: () => ipcRenderer.invoke('dialog:newProject'),
       dialogOpenProject: () => ipcRenderer.invoke('dialog:openProject'),
       projectCreate: (path: string, name: string) =>
@@ -81,6 +83,7 @@ if (process.contextIsolated) {
   window.electronAPI = {
     readFile: (path: string) => ipcRenderer.invoke('fs:readFile', path),
     writeFile: (path: string, content: string) => ipcRenderer.invoke('fs:writeFile', path, content),
+    isDirectoryEmpty: (path: string) => ipcRenderer.invoke('fs:isDirectoryEmpty', path),
     dialogNewProject: () => ipcRenderer.invoke('dialog:newProject'),
     dialogOpenProject: () => ipcRenderer.invoke('dialog:openProject'),
     projectCreate: (path: string, name: string) => ipcRenderer.invoke('project:create', path, name),

@@ -21,8 +21,15 @@
     }
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (projectName && projectPath) {
+      const isEmpty = await window.electronAPI.isDirectoryEmpty(projectPath)
+      if (!isEmpty) {
+        if (!confirm('The directory is not empty. Do you want to continue?')) {
+          return
+        }
+      }
+
       dispatch('confirm', { name: projectName, path: projectPath })
       reset()
     }

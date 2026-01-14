@@ -42,6 +42,7 @@ declare global {
     electronAPI: {
       readFile: (path: string) => Promise<string>
       writeFile: (path: string, content: string) => Promise<void>
+      isDirectoryEmpty: (path: string) => Promise<boolean>
       dialogNewProject: () => Promise<string | null>
       dialogOpenProject: () => Promise<string | null>
       projectCreate: (path: string, name: string) => Promise<string>

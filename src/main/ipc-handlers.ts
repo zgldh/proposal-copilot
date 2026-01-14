@@ -1,6 +1,6 @@
 import { dialog, BrowserWindow, ipcMain } from 'electron'
-import { existsSync, writeFileSync, readFileSync } from 'fs'
-import { join } from 'path'
+import { existsSync, writeFileSync, readFileSync, readdirSync } from 'fs'
+import { join, normalize } from 'path'
 import { app } from 'electron'
 
 interface ProjectMeta {
@@ -50,6 +50,11 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
     writeFileSync(path, content, 'utf-8')
   })
 
+  ipcMain.handle('fs:isDirectoryEmpty', async (_event, path: string) => {
+    const files = readdirSync(path)
+    return files.length === 0
+  })
+
   ipcMain.handle('dialog:newProject', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Create New Project',
@@ -61,7 +66,7 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
       return null
     }
 
-    return result.filePaths[0]
+    return normalize(result.filePaths[0])
   })
 
   ipcMain.handle('dialog:openProject', async () => {
@@ -76,7 +81,7 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
       return null
     }
 
-    return result.filePaths[0]
+    return normalize(result.filePaths[0])
   })
 
   ipcMain.handle('project:create', async (_event, projectPath: string, projectName: string) => {
