@@ -1,11 +1,15 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import { OpenAIService } from './services/openai-service'
+import { DeepSeekService } from './services/deepseek-service'
 import type { LLMConfig, ChatMessage } from './services/llm-types'
 
 const openAIService = new OpenAIService()
+const deepSeekService = new DeepSeekService()
 
-function getProvider(_config: LLMConfig) {
-  // Future: Switch based on config.id or config.type (e.g. return deepseekService)
+function getProvider(config: LLMConfig) {
+  if (config.id === 'deepseek') {
+    return deepSeekService
+  }
   return openAIService
 }
 
