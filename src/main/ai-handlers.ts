@@ -2,11 +2,14 @@ import { ipcMain, BrowserWindow } from 'electron'
 import { OpenAIService } from './services/openai-service'
 import { DeepSeekService } from './services/deepseek-service'
 import { OllamaService } from './services/ollama-service'
+import { ConversionEngine } from './services/conversion-engine'
 import type { LLMConfig, ChatMessage } from './services/llm-types'
+import type { TreeNode } from './services/ai-types'
 
 const openAIService = new OpenAIService()
 const deepSeekService = new DeepSeekService()
 const ollamaService = new OllamaService()
+const conversionEngine = new ConversionEngine()
 
 function getProvider(config: LLMConfig) {
   if (config.id === 'deepseek') {
@@ -51,5 +54,16 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
 
   ipcMain.handle('ai:ollama:getModels', async (_event, baseUrl: string) => {
     return await ollamaService.getAvailableModels(baseUrl || 'http://localhost:11434')
+  })
+
+  ipcMain.handle('ai:process-message', async (_event, {
+    message,
+    history,
+    projectContext,
+    config
+  }: { message: string, history: ChatMessage[], projectContext: TreeNode[], config: LLMConfig }) => {
+    const provider = getProvider(config)
+    // Pass the provider instance to the engine
+    return await conversionEngine.processMessage(message, history, projectContext, provider, config)
   })
 }

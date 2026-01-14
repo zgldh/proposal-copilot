@@ -19,6 +19,30 @@ interface Settings {
   providers: Record<string, ProviderConfig>
 }
 
+interface TreeNode {
+  id: string
+  type: 'subsystem' | 'device' | 'feature'
+  name: string
+  specs: Record<string, string>
+  quantity: number
+  children: TreeNode[]
+}
+
+interface TreeOperation {
+  type: 'add' | 'update' | 'delete' | 'move'
+  targetParentId?: string | null
+  targetNodeId?: string
+  nodeData?: Partial<TreeNode>
+  targetParentName?: string // Optional context from AI
+  targetNodeName?: string
+}
+
+interface ConversionResult {
+  textResponse: string
+  operations: TreeOperation[]
+  needsClarification?: boolean
+}
+
 declare global {
   interface Window {
     electronAPI: {
@@ -41,6 +65,12 @@ declare global {
         ollama: {
           getModels: (baseUrl: string) => Promise<string[]>
         }
+        processMessage: (params: {
+          message: string
+          history: ChatMessage[]
+          projectContext: TreeNode[]
+          config: ProviderConfig
+        }) => Promise<ConversionResult>
       }
     }
     electron: {
@@ -98,7 +128,9 @@ if (process.contextIsolated) {
         },
         ollama: {
           getModels: (baseUrl: string) => ipcRenderer.invoke('ai:ollama:getModels', baseUrl)
-        }
+        },
+        processMessage: (params) =>
+          ipcRenderer.invoke('ai:process-message', params)
       }
     })
 
@@ -155,7 +187,9 @@ if (process.contextIsolated) {
       },
       ollama: {
         getModels: (baseUrl: string) => ipcRenderer.invoke('ai:ollama:getModels', baseUrl)
-      }
+      },
+      processMessage: (params) =>
+        ipcRenderer.invoke('ai:process-message', params)
     }
   }
 }

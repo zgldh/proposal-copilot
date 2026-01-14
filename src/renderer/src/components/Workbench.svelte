@@ -93,10 +93,33 @@
 
     try {
       chatStore.addUserMessage(content)
-      // TODO: Implement actual LLM call here when chatStore.sendMessage is fully implemented
+      chatStore.setLoading(true)
+
+      // Prepare context
+      const history = $chatStore.messages.map(m => ({ role: m.role, content: m.content }))
+      const projectContext = $projectStore.currentProject?.structure_tree || []
+      
+      // Get active provider config
+      const settings = $settingsStore.settings
+      const config = settings.providers[settings.active_provider_id]
+
+      // Call AI Engine
+      const result = await window.electronAPI.ai.processMessage({
+        message: content,
+        history,
+        projectContext,
+        config
+      })
+
+      // Handle response
+      chatStore.addAssistantMessage(result.textResponse)
+      projectStore.applyOperations(result.operations)
+
     } catch (error) {
       console.error('Failed to send message:', error)
       toast.error('Failed to send message')
+    } finally {
+      chatStore.setLoading(false)
     }
   }
 

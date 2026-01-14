@@ -7,6 +7,13 @@ interface ProjectState {
   isDirty: boolean
 }
 
+interface TreeOperation {
+  type: 'add' | 'update' | 'delete' | 'move'
+  targetParentId?: string | null
+  targetNodeId?: string
+  nodeData?: Partial<TreeNode>
+}
+
 const initialState: ProjectState = {
   currentProject: null,
   projectPath: null,
@@ -271,6 +278,60 @@ function createProjectStore() {
         JSON.stringify(state.currentProject, null, 2)
       )
       update((s) => ({ ...s, isDirty: false }))
+    },
+
+    applyOperations: (operations: TreeOperation[]) => {
+      update((state) => {
+        if (!state.currentProject) return state
+        
+        let newTree = [...state.currentProject.structure_tree]
+        
+        // Helper to add node recursively
+        const addRecursive = (nodes: TreeNode[], parentId: string, newNode: TreeNode): TreeNode[] => {
+          return nodes.map(node => {
+            if (node.id === parentId) {
+              return { ...node, children: [...node.children, newNode] }
+            }
+            if (node.children.length > 0) {
+              return { ...node, children: addRecursive(node.children, parentId, newNode) }
+            }
+            return node
+          })
+        }
+
+        // Helper to find parent by ID or return root if null
+        // Note: update() wrapper handles the immutable state return
+        
+        for (const op of operations) {
+          if (op.type === 'add' && op.nodeData) {
+            const newNode: TreeNode = {
+              id: generateId(),
+              type: op.nodeData.type || 'device',
+              name: op.nodeData.name || 'New Item',
+              quantity: op.nodeData.quantity || 1,
+              specs: op.nodeData.specs || {},
+              children: []
+            }
+
+            if (!op.targetParentId) {
+              // Add to root
+              newTree.push(newNode)
+            } else {
+              newTree = addRecursive(newTree, op.targetParentId, newNode)
+            }
+          }
+          // TODO: Implement update/delete for AI operations here if needed
+        }
+
+        return {
+          ...state,
+          currentProject: {
+            ...state.currentProject,
+            structure_tree: newTree
+          },
+          isDirty: true
+        }
+      })
     },
 
     clear: () => {

@@ -42,6 +42,21 @@ interface Project {
   structure_tree: TreeNode[]
 }
 
+interface TreeOperation {
+  type: 'add' | 'update' | 'delete' | 'move'
+  targetParentId?: string | null
+  targetNodeId?: string
+  nodeData?: Partial<TreeNode>
+  targetParentName?: string // Optional context from AI
+  targetNodeName?: string
+}
+
+interface ConversionResult {
+  textResponse: string
+  operations: TreeOperation[]
+  needsClarification?: boolean
+}
+
 declare global {
   interface Window {
     electronAPI: {
@@ -64,6 +79,12 @@ declare global {
         ollama: {
           getModels: (baseUrl: string) => Promise<string[]>
         }
+        processMessage: (params: {
+          message: string
+          history: ChatMessage[]
+          projectContext: TreeNode[]
+          config: ProviderConfig
+        }) => Promise<ConversionResult>
       }
     }
     electron: {
