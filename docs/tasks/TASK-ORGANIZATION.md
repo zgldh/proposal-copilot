@@ -222,11 +222,11 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
 
 ### 已创建的高优先级任务文件
 
-1. `docs/tasks/ui/TASK-UI-001.md` - 项目树可视化组件
-2. `docs/tasks/ai/TASK-AI-001.md` - OpenAI 集成
-3. `docs/tasks/ai/TASK-AI-002.md` - DeepSeek 集成
-4. `docs/tasks/ai/TASK-AI-003.md` - Ollama 本地集成
-5. `docs/tasks/ai/TASK-AI-005.md` - 对话到项目树转换
+1. `docs/tasks/ui/TASK-UI-001.md` - ✅项目树可视化组件
+2. `docs/tasks/ai/TASK-AI-001.md` - ✅OpenAI 集成
+3. `docs/tasks/ai/TASK-AI-002.md` - ✅DeepSeek 集成
+4. `docs/tasks/ai/TASK-AI-003.md` - ✅Ollama 本地集成
+5. `docs/tasks/ai/TASK-AI-005.md` - ✅对话到项目树转换
 6. `docs/tasks/core/TASK-CORE-001.md` - 项目数据模型增强
 7. `docs/tasks/doc/TASK-DOC-001.md` - 参考文档解析
 
