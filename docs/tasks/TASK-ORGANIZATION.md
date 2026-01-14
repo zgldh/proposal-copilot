@@ -224,17 +224,19 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
 
 1. `docs/tasks/ui/TASK-UI-001.md` - 项目树可视化组件
 2. `docs/tasks/ai/TASK-AI-001.md` - OpenAI 集成
-3. `docs/tasks/ai/TASK-AI-005.md` - 对话到项目树转换
-4. `docs/tasks/core/TASK-CORE-001.md` - 项目数据模型增强
-5. `docs/tasks/doc/TASK-DOC-001.md` - 参考文档解析
+3. `docs/tasks/ai/TASK-AI-002.md` - DeepSeek 集成
+4. `docs/tasks/ai/TASK-AI-003.md` - Ollama 本地集成
+5. `docs/tasks/ai/TASK-AI-005.md` - 对话到项目树转换
+6. `docs/tasks/core/TASK-CORE-001.md` - 项目数据模型增强
+7. `docs/tasks/doc/TASK-DOC-001.md` - 参考文档解析
 
 ### 需要创建的其他高优先级任务
 
-6. `docs/tasks/ui/TASK-UI-005.md` - 聊天面板增强
-7. `docs/tasks/doc/TASK-DOC-002.md` - 内容生成
-8. `docs/tasks/doc/TASK-DOC-005.md` - BOM 扁平化
-9. `docs/tasks/qa/TASK-QA-001.md` - 单元测试
-10. `docs/tasks/ops/TASK-OPS-001.md` - 多平台打包
+8. `docs/tasks/ui/TASK-UI-005.md` - 聊天面板增强
+9. `docs/tasks/doc/TASK-DOC-002.md` - 内容生成
+10. `docs/tasks/doc/TASK-DOC-005.md` - BOM 扁平化
+11. `docs/tasks/qa/TASK-QA-001.md` - 单元测试
+12. `docs/tasks/ops/TASK-OPS-001.md` - 多平台打包
 
 ## 下一步行动
 
