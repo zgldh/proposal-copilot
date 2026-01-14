@@ -10,12 +10,14 @@
   import SettingsView from './SettingsView.svelte'
   import SplitPane from './SplitPane.svelte'
   import ChatPanel from './ChatPanel.svelte'
+  import TreeView from './tree/TreeView.svelte'
   import MarkdownPreview from './MarkdownPreview.svelte'
   import TabBar from './TabBar.svelte'
   import ToastContainer from './ToastContainer.svelte'
 
   let showNewProjectDialog = $state(false)
   let activeTab = $derived($workbenchStore.tabs.find((t) => t.id === $workbenchStore.activeTabId))
+  let rightPanelView = $state<'tree' | 'preview'>('tree')
 
   onMount(() => {
     settingsStore.load()
@@ -130,7 +132,21 @@
             <ChatPanel messages={$chatStore.messages} onsend={handleSendMessage} />
           {/snippet}
           {#snippet right()}
-            <MarkdownPreview project={$projectStore.currentProject} />
+            <div class="right-panel-container">
+              <div class="right-panel-tabs">
+                <button class:active={rightPanelView === 'tree'} onclick={() => rightPanelView = 'tree'}>
+                  Structure
+                </button>
+                <button class:active={rightPanelView === 'preview'} onclick={() => rightPanelView = 'preview'}>
+                  Preview
+                </button>
+              </div>
+              {#if rightPanelView === 'tree'}
+                <TreeView />
+              {:else}
+                <MarkdownPreview project={$projectStore.currentProject} />
+              {/if}
+            </div>
           {/snippet}
         </SplitPane>
       {/if}
@@ -176,5 +192,41 @@
     justify-content: center;
     background: var(--color-background);
     color: var(--ev-c-text-2);
+  }
+
+  .right-panel-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--color-background);
+  }
+
+  .right-panel-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--ev-c-gray-3);
+    background: var(--color-background-soft);
+  }
+
+  .right-panel-tabs button {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    background: transparent;
+    color: var(--ev-c-text-2);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+
+  .right-panel-tabs button:hover {
+    background: var(--ev-c-gray-3);
+    color: var(--color-text);
+  }
+
+  .right-panel-tabs button.active {
+    color: var(--ev-c-primary);
+    border-bottom-color: var(--ev-c-primary);
+    background: var(--color-background);
   }
 </style>

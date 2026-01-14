@@ -201,6 +201,68 @@ function createProjectStore() {
       })
     },
 
+    moveTreeNode: (sourceId: string, targetId: string, position: 'before' | 'after' | 'inside') => {
+      update((state) => {
+        if (!state.currentProject) return state
+
+        // Deep clone tree to manipulate
+        const tree = JSON.parse(JSON.stringify(state.currentProject.structure_tree)) as TreeNode[]
+        let sourceNode: TreeNode | null = null
+
+        // 1. Remove source node
+        function removeNode(nodes: TreeNode[]): TreeNode[] {
+          const result: TreeNode[] = []
+          for (const node of nodes) {
+            if (node.id === sourceId) {
+              sourceNode = node
+              continue
+            }
+            if (node.children.length > 0) {
+              node.children = removeNode(node.children)
+            }
+            result.push(node)
+          }
+          return result
+        }
+
+        const treeWithoutSource = removeNode(tree)
+        if (!sourceNode) return state
+
+        // 2. Insert at target
+        let inserted = false
+        function insertNode(nodes: TreeNode[]): TreeNode[] {
+          const result: TreeNode[] = []
+          for (const node of nodes) {
+            if (node.id === targetId) {
+              if (position === 'before') result.push(sourceNode!)
+              result.push(node)
+              if (position === 'after') result.push(sourceNode!)
+              if (position === 'inside') {
+                node.children = [...node.children, sourceNode!]
+              }
+              inserted = true
+            } else {
+              // Recursively process children
+              const newChildren = insertNode(node.children)
+              node.children = newChildren
+              result.push(node)
+            }
+          }
+          return result
+        }
+
+        const finalTree = insertNode(treeWithoutSource)
+
+        if (!inserted) return state // Target not found (e.g. dropped inside self)
+
+        return {
+          ...state,
+          currentProject: { ...state.currentProject, structure_tree: finalTree },
+          isDirty: true
+        }
+      })
+    },
+
     async save() {
       const state = get({ subscribe })
       if (!state.currentProject || !state.projectPath) return
