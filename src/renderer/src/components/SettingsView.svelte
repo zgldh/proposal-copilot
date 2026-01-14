@@ -4,11 +4,12 @@
   import { onMount } from 'svelte'
   import type { ProviderConfig } from '$lib/types'
 
-  onMount(() => {
-    settingsStore.load()
+  onMount(async () => {
+    await settingsStore.load()
+    selectedProviderId = $settingsStore.settings.active_provider_id
   })
 
-  let selectedProviderId = $state('openai')
+  let selectedProviderId = $state($settingsStore.settings.active_provider_id)
 
   // Reactive helpers
   let settings = $derived($settingsStore.settings)

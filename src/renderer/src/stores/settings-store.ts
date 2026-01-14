@@ -76,11 +76,13 @@ function createSettingsStore() {
       })
     },
 
-    updateTheme(theme: 'light' | 'dark') {
+    async updateTheme(theme: 'light' | 'dark') {
       update((state) => ({
         ...state,
         settings: { ...state.settings, theme }
       }))
+      const state = get({ subscribe })
+      await window.electron.settings.write(state.settings)
     }
   }
 }

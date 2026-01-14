@@ -6,6 +6,7 @@
     minRatio?: number
     maxRatio?: number
     defaultRatio?: number
+    storageKey?: string
   }
 
   let {
@@ -13,7 +14,8 @@
     right,
     minRatio = 0.3,
     maxRatio = 0.7,
-    defaultRatio = 0.5
+    defaultRatio = 0.5,
+    storageKey
   }: Props = $props()
 
   let ratio = $state(defaultRatio)
@@ -37,6 +39,9 @@
   }
 
   function handleMouseUp() {
+    if (isDragging && storageKey) {
+      localStorage.setItem(storageKey, ratio.toString())
+    }
     isDragging = false
   }
 
@@ -48,6 +53,20 @@
         window.removeEventListener('mouseup', handleMouseUp)
         window.removeEventListener('mousemove', handleMouseMove)
       }
+    }
+  })
+
+  $effect(() => {
+    if (storageKey) {
+      const stored = localStorage.getItem(storageKey)
+      if (stored) {
+        const val = parseFloat(stored)
+        if (!isNaN(val) && val >= minRatio && val <= maxRatio) {
+          ratio = val
+          return
+        }
+      }
+      ratio = defaultRatio
     }
   })
 </script>

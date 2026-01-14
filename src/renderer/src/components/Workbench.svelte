@@ -126,7 +126,12 @@
       {#if $workbenchStore.isSwitching}
         <div class="loading-overlay">Loading Project...</div>
       {:else}
-        <SplitPane minRatio={0.3} maxRatio={0.7} defaultRatio={0.5}>
+        <SplitPane
+          minRatio={0.3}
+          maxRatio={0.7}
+          defaultRatio={0.5}
+          storageKey={$projectStore.projectPath ? `split-ratio-${$projectStore.projectPath}` : undefined}
+        >
           {#snippet left()}
             <ChatPanel messages={$chatStore.messages} onsend={handleSendMessage} />
           {/snippet}
