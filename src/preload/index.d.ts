@@ -2,18 +2,18 @@ declare module 'marked' {
   export function parse(markdown: string): string
 }
 
-interface LlmProvider {
+interface ProviderConfig {
   id: string
   name: string
-  type: 'openai' | 'deepseek' | 'custom'
   api_key: string
   base_url?: string
   model: string
 }
 
 interface Settings {
-  llm_provider: LlmProvider
   theme: 'light' | 'dark'
+  active_provider_id: string
+  providers: Record<string, ProviderConfig>
 }
 
 interface ProjectMeta {

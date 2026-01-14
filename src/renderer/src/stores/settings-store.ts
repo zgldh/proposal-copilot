@@ -1,15 +1,32 @@
 import { writable, get } from 'svelte/store'
-import type { Settings, LlmProvider } from '$lib/types'
+import type { Settings, ProviderConfig } from '$lib/types'
 
 const DEFAULT_SETTINGS: Settings = {
-  llm_provider: {
-    id: 'default',
-    name: 'Default Provider',
-    type: 'openai',
-    api_key: '',
-    model: 'gpt-4'
-  },
-  theme: 'dark'
+  theme: 'dark',
+  active_provider_id: 'openai',
+  providers: {
+    openai: {
+      id: 'openai',
+      name: 'OpenAI',
+      api_key: '',
+      base_url: 'https://api.openai.com/v1',
+      model: 'gpt-4'
+    },
+    deepseek: {
+      id: 'deepseek',
+      name: 'DeepSeek',
+      api_key: '',
+      base_url: 'https://api.deepseek.com',
+      model: 'deepseek-chat'
+    },
+    custom: {
+      id: 'custom',
+      name: 'Custom (Ollama)',
+      api_key: 'sk-placeholder',
+      base_url: 'http://localhost:11434/v1',
+      model: 'llama3'
+    }
+  }
 }
 
 interface SettingsState {
@@ -20,21 +37,15 @@ interface SettingsState {
 function createSettingsStore() {
   const { subscribe, set, update } = writable<SettingsState>({
     settings: DEFAULT_SETTINGS,
-    isLoading: false
+    isLoading: true
   })
 
   return {
     subscribe,
-
     async load() {
-      update((state) => ({ ...state, isLoading: true }))
-      try {
-        const settings = await window.electron.settings.read()
-        set({ settings, isLoading: false })
-      } catch (error) {
-        console.log('Using default settings:', error)
-        set({ settings: DEFAULT_SETTINGS, isLoading: false })
-      }
+      update((s) => ({ ...s, isLoading: true }))
+      const settings = await window.electron.settings.read()
+      set({ settings, isLoading: false })
     },
 
     async save() {
@@ -42,44 +53,27 @@ function createSettingsStore() {
       await window.electron.settings.write(state.settings)
     },
 
-    updateProvider(provider: Partial<LlmProvider>) {
+    setActiveProvider(id: string) {
       update((state) => {
-        const updatedProvider = { ...state.settings.llm_provider, ...provider }
         return {
           ...state,
-          settings: { ...state.settings, llm_provider: updatedProvider }
+          settings: { ...state.settings, active_provider_id: id }
         }
       })
     },
 
-    updateProviderApiKey(apiKey: string) {
-      update((state) => ({
-        ...state,
-        settings: {
-          ...state.settings,
-          llm_provider: { ...state.settings.llm_provider, api_key: apiKey }
+    updateProviderConfig(id: string, config: Partial<ProviderConfig>) {
+      update((state) => {
+        const oldConfig = state.settings.providers[id] || { id, name: id, api_key: '', model: '' }
+        const newConfig = { ...oldConfig, ...config }
+        return {
+          ...state,
+          settings: {
+            ...state.settings,
+            providers: { ...state.settings.providers, [id]: newConfig }
+          }
         }
-      }))
-    },
-
-    updateProviderBaseUrl(baseUrl: string) {
-      update((state) => ({
-        ...state,
-        settings: {
-          ...state.settings,
-          llm_provider: { ...state.settings.llm_provider, base_url: baseUrl }
-        }
-      }))
-    },
-
-    updateProviderModel(model: string) {
-      update((state) => ({
-        ...state,
-        settings: {
-          ...state.settings,
-          llm_provider: { ...state.settings.llm_provider, model }
-        }
-      }))
+      })
     },
 
     updateTheme(theme: 'light' | 'dark') {
@@ -87,11 +81,6 @@ function createSettingsStore() {
         ...state,
         settings: { ...state.settings, theme }
       }))
-    },
-
-    async reset() {
-      await window.electron.settings.write(DEFAULT_SETTINGS)
-      set({ settings: DEFAULT_SETTINGS, isLoading: false })
     }
   }
 }

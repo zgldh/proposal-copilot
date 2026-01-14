@@ -17,16 +17,24 @@ export interface TreeNode {
   children: TreeNode[]
 }
 
-export interface LlmProvider {
+export interface Tab {
+  id: string
+  type: 'home' | 'settings' | 'project'
+  title: string
+  path?: string // Required for 'project' type
+  isDirty?: boolean
+}
+
+export interface ProviderConfig {
   id: string
   name: string
-  type: 'openai' | 'deepseek' | 'custom'
   api_key: string
   base_url?: string
   model: string
 }
 
 export interface Settings {
-  llm_provider: LlmProvider
   theme: 'light' | 'dark'
+  active_provider_id: string
+  providers: Record<string, ProviderConfig>
 }

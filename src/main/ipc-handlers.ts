@@ -24,18 +24,18 @@ export interface Project {
   structure_tree: TreeNode[]
 }
 
-export interface LlmProvider {
+export interface ProviderConfig {
   id: string
   name: string
-  type: 'openai' | 'deepseek' | 'custom'
   api_key: string
   base_url?: string
   model: string
 }
 
 export interface Settings {
-  llm_provider: LlmProvider
   theme: 'light' | 'dark'
+  active_provider_id: string
+  providers: Record<string, ProviderConfig>
 }
 
 export function setupProjectHandlers(mainWindow: BrowserWindow) {
@@ -112,23 +112,70 @@ const SETTINGS_PATH = join(app.getPath('userData'), 'settings.json')
 
 function readSettings(): Settings {
   if (!existsSync(SETTINGS_PATH)) {
-    const defaultSettings: Settings = {
-      llm_provider: {
-        id: 'default',
-        name: 'OpenAI',
-        type: 'openai',
-        api_key: '',
-        base_url: 'https://api.openai.com/v1',
-        model: 'gpt-4'
-      },
-      theme: 'light'
-    }
+    const defaultSettings = createDefaultSettings()
     writeFileSync(SETTINGS_PATH, JSON.stringify(defaultSettings, null, 2))
     return defaultSettings
   }
 
   const content = readFileSync(SETTINGS_PATH, 'utf-8')
-  return JSON.parse(content)
+  const raw = JSON.parse(content)
+
+  // Migration logic: convert legacy settings if 'llm_provider' exists
+  if (raw.llm_provider) {
+    const legacy = raw.llm_provider
+    const defaultSettings = createDefaultSettings()
+
+    // Map legacy values to the appropriate provider in new structure
+    const targetId =
+      legacy.type === 'deepseek' ? 'deepseek' : legacy.type === 'custom' ? 'custom' : 'openai'
+
+    defaultSettings.active_provider_id = targetId
+    defaultSettings.theme = raw.theme || 'light'
+
+    if (defaultSettings.providers[targetId]) {
+      defaultSettings.providers[targetId].api_key = legacy.api_key || ''
+      defaultSettings.providers[targetId].base_url =
+        legacy.base_url || defaultSettings.providers[targetId].base_url
+      defaultSettings.providers[targetId].model =
+        legacy.model || defaultSettings.providers[targetId].model
+    }
+
+    // Save migrated settings
+    writeFileSync(SETTINGS_PATH, JSON.stringify(defaultSettings, null, 2))
+    return defaultSettings
+  }
+
+  return raw
+}
+
+function createDefaultSettings(): Settings {
+  return {
+    theme: 'dark',
+    active_provider_id: 'openai',
+    providers: {
+      openai: {
+        id: 'openai',
+        name: 'OpenAI',
+        api_key: '',
+        base_url: 'https://api.openai.com/v1',
+        model: 'gpt-4'
+      },
+      deepseek: {
+        id: 'deepseek',
+        name: 'DeepSeek',
+        api_key: '',
+        base_url: 'https://api.deepseek.com',
+        model: 'deepseek-chat'
+      },
+      custom: {
+        id: 'custom',
+        name: 'Custom (Ollama)',
+        api_key: 'sk-placeholder',
+        base_url: 'http://localhost:11434/v1',
+        model: 'llama3'
+      }
+    }
+  }
 }
 
 function writeSettings(settings: Settings): void {
