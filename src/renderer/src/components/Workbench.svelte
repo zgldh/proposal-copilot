@@ -34,7 +34,10 @@
   async function handleTabSwitch(newTabId: string) {
     if (newTabId === previousTabId) return
 
-    const prevTab = $workbenchStore.tabs.find((t) => t.id === previousTabId)
+    const currentPrevId = previousTabId
+    previousTabId = newTabId
+
+    const prevTab = $workbenchStore.tabs.find((t) => t.id === currentPrevId)
     const nextTab = $workbenchStore.tabs.find((t) => t.id === newTabId)
 
     // 1. Save previous project if dirty
@@ -56,8 +59,6 @@
       }
       workbenchStore.setSwitching(false)
     }
-
-    previousTabId = newTabId
   }
 
   // Dialog Handlers
