@@ -231,7 +231,7 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
 4. `docs/tasks/ai/TASK-AI-002.md` - ✅DeepSeek 集成
 5. `docs/tasks/ai/TASK-AI-003.md` - ✅Ollama 本地集成
 6. `docs/tasks/ai/TASK-AI-005.md` - ✅对话到项目树转换
-7. `docs/tasks/ai/TASK-AI-006.md` - AI对话深度增强 - 设问式响应与引导
+7. `docs/tasks/ai/TASK-AI-006.md` - ✅AI对话深度增强 - 设问式响应与引导
 8. `docs/tasks/ai/TASK-AI-007.md` - AI搜索能力增强 - 知识不足时的外部搜索
 9. `docs/tasks/ai/TASK-AI-008.md` - 多模态支持 - 图片输入功能
 10. `docs/tasks/core/TASK-CORE-001.md` - ✅项目数据模型增强
