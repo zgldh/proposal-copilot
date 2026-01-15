@@ -309,7 +309,7 @@ function createProjectStore() {
         for (const op of operations) {
           if (op.type === 'add' && op.nodeData) {
             const newNode: TreeNode = {
-              id: generateId(),
+              id: op.nodeData.id || generateId(), // Use ID from inference if available (for batch linking)
               type: op.nodeData.type || 'device',
               name: op.nodeData.name || 'New Item',
               quantity: op.nodeData.quantity || 1,

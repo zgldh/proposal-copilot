@@ -57,6 +57,9 @@ export class ProjectService {
   }
 
   async saveProject(path: string, data: Project): Promise<void> {
+    const filePath = path.endsWith('project.json') ? path : join(path, 'project.json')
+    console.log('[ProjectService] Saving to path:', filePath)
+
     // Validate before save
     const validation = this.validator.validate(data)
     if (!validation.valid) {
@@ -64,7 +67,7 @@ export class ProjectService {
     }
 
     data.meta.last_modified = new Date().toISOString()
-    writeFileSync(path, JSON.stringify(data, null, 2), 'utf-8')
+    writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8')
   }
 
   async createSnapshot(path: string, description: string): Promise<string> {

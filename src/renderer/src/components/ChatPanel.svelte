@@ -1,19 +1,27 @@
 <script lang="ts">
+  import { marked } from 'marked'
+
   interface Props {
     messages?: Array<{ role: 'user' | 'assistant'; content: string }>
+    isLoading?: boolean
     onsend?: (content: string) => void
+    onstop?: () => void
   }
 
-  let { messages = [], onsend }: Props = $props()
+  let { messages = [], isLoading = false, onsend, onstop }: Props = $props()
 
   let inputContent = $state('')
   let messagesContainer: HTMLDivElement
   let textarea: HTMLTextAreaElement
+  let isNearBottom = $state(true)
+  let lastMessageCount = 0
 
   function handleSend() {
     if (!inputContent.trim()) return
     onsend?.(inputContent.trim())
     inputContent = ''
+    // User sent a message, force scroll to bottom
+    isNearBottom = true
   }
 
   function handleKeyDown(e: KeyboardEvent) {
@@ -29,23 +37,38 @@
     }
   }
 
+  function handleScroll() {
+    if (!messagesContainer) return
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainer
+    // Consider "near bottom" if within 50px of the bottom
+    isNearBottom = scrollHeight - scrollTop - clientHeight <= 50
+  }
+
   $effect(() => {
-    if (messages.length) {
+    const count = messages.length
+    // If a new message was added, always scroll to bottom
+    if (count > lastMessageCount) {
+      isNearBottom = true
+      setTimeout(scrollToBottom, 0) // Tick
+    }
+    // If existing message updated (streaming), only scroll if user was already at bottom
+    else if (isNearBottom) {
       scrollToBottom()
     }
+    lastMessageCount = count
   })
 
   function formatContent(content: string): string {
-    return content
-      .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-      .replace(/`([^`]+)`/g, '<code>$1</code>')
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\n/g, '<br>')
+    // Remove JSON command blocks (typically at the end of AI response)
+    // Matches ```json [ ... ] ``` or just ``` [ ... ] ``` if it contains a JSON array
+    const jsonBlockRegex = /```(?:json)?\s*\[[\s\S]*?\]\s*```$/
+    const cleaned = content.replace(jsonBlockRegex, '').trim()
+    return marked.parse(cleaned) as string
   }
 </script>
 
 <div class="chat-panel">
-  <div class="messages" bind:this={messagesContainer}>
+  <div class="messages" bind:this={messagesContainer} onscroll={handleScroll}>
     {#if messages.length === 0}
       <div class="empty-state">
         <p>开始与 AI 对话，描述您的项目需求</p>
@@ -59,13 +82,28 @@
           </div>
           <div class="message-content">
             {@html formatContent(message.content)}
+            {#if message.role === 'assistant' && isLoading && message === messages[messages.length - 1]}
+              <span class="cursor"></span>
+            {/if}
           </div>
         </div>
       {/each}
     {/if}
+    {#if isLoading && (messages.length === 0 || messages[messages.length - 1].role === 'user')}
+      <div class="message assistant thinking">
+        <div class="message-content">
+          <span class="dot">.</span><span class="dot">.</span><span class="dot">.</span>
+        </div>
+      </div>
+    {/if}
   </div>
 
   <div class="input-area">
+    {#if isLoading}
+      <button class="stop-button" onclick={onstop}>
+        ■ Stop Generating
+      </button>
+    {/if}
     <textarea
       bind:this={textarea}
       bind:value={inputContent}
@@ -106,6 +144,40 @@
   .empty-state .hint {
     font-size: 0.875rem;
     margin-top: 0.5rem;
+  }
+  
+  .cursor {
+    display: inline-block;
+    width: 6px;
+    height: 14px;
+    background-color: currentColor;
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+  }
+  
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .thinking .message-content {
+    background: transparent !important;
+    padding-left: 0;
+  }
+
+  .dot {
+    animation: wave 1.5s infinite;
+    display: inline-block;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes wave {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-5px); }
   }
 
   .message {
@@ -166,12 +238,32 @@
   }
 
   .input-area {
+    position: relative;
     display: flex;
     gap: 0.5rem;
     padding: 1rem;
     border-top: 1px solid var(--ev-c-gray-3, #e8e8e8);
     background: var(--color-background-soft, #fafafa);
   }
+
+  .stop-button {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-background);
+    border: 1px solid var(--ev-c-gray-3);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    cursor: pointer;
+    color: var(--ev-c-text-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stop-button:hover { background: var(--color-background-soft); color: #ef4444; }
 
   .input-area textarea {
     flex: 1;

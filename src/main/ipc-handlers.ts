@@ -20,22 +20,32 @@ export interface Settings {
 
 export function setupProjectHandlers(mainWindow: BrowserWindow) {
   ipcMain.handle('fs:readFile', async (_event, path: string) => {
+    console.log('[IPC] fs:readFile', path)
     if (!existsSync(path)) {
+      console.error('[IPC] fs:readFile error: Not found', path)
       throw new Error('File not found')
     }
     return readFileSync(path, 'utf-8')
   })
 
   ipcMain.handle('fs:writeFile', async (_event, path: string, content: string) => {
-    writeFileSync(path, content, 'utf-8')
+    console.log('[IPC] fs:writeFile', path)
+    try {
+      writeFileSync(path, content, 'utf-8')
+    } catch (error) {
+      console.error('[IPC] fs:writeFile error:', error)
+      throw error
+    }
   })
 
   ipcMain.handle('fs:isDirectoryEmpty', async (_event, path: string) => {
+    console.log('[IPC] fs:isDirectoryEmpty', path)
     const files = readdirSync(path)
     return files.length === 0
   })
 
   ipcMain.handle('dialog:newProject', async () => {
+    console.log('[IPC] dialog:newProject')
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Create New Project',
       buttonLabel: 'Select Folder',
@@ -43,13 +53,16 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
     })
 
     if (result.canceled || result.filePaths.length === 0) {
+      console.log('[IPC] dialog:newProject canceled')
       return null
     }
 
+    console.log('[IPC] dialog:newProject selected', result.filePaths[0])
     return normalize(result.filePaths[0])
   })
 
   ipcMain.handle('dialog:openProject', async () => {
+    console.log('[IPC] dialog:openProject')
     const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Open Project',
       buttonLabel: 'Open',
@@ -58,13 +71,16 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
     })
 
     if (result.canceled || result.filePaths.length === 0) {
+      console.log('[IPC] dialog:openProject canceled')
       return null
     }
 
+    console.log('[IPC] dialog:openProject selected', result.filePaths[0])
     return normalize(result.filePaths[0])
   })
 
   ipcMain.handle('project:create', async (_event, projectPath: string, projectName: string) => {
+    console.log('[IPC] project:create', { projectPath, projectName })
     const initialProject = {
       meta: {
         name: projectName,
@@ -77,23 +93,47 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
 
     const projectJsonPath = join(projectPath, 'project.json')
     // We use save which handles validation (though initial is valid) and formatting
-    await projectService.saveProject(projectJsonPath, initialProject as Project)
-    return projectJsonPath
+    try {
+      await projectService.saveProject(projectJsonPath, initialProject as Project)
+      console.log('[IPC] project:create success', projectJsonPath)
+      return projectJsonPath
+    } catch (error) {
+      console.error('[IPC] project:create error:', error)
+      throw error
+    }
   })
 
   ipcMain.handle('project:read', async (_event, path: string) => {
+    console.log('[IPC] project:read', path)
     // ProjectService handles validation and migration on load
-    return await projectService.loadProject(path)
+    try {
+      return await projectService.loadProject(path)
+    } catch (error) {
+      console.error('[IPC] project:read error:', error)
+      throw error
+    }
   })
 
   ipcMain.handle('project:save', async (_event, path: string, data: Project) => {
-    await projectService.saveProject(path, data)
-    return true
+    console.log('[IPC] project:save', path)
+    try {
+      await projectService.saveProject(path, data)
+      return true
+    } catch (error) {
+      console.error('[IPC] project:save error:', error)
+      throw error
+    }
   })
 
   ipcMain.handle('project:undo', async (_event, path: string) => {
-    const restoredProject = await projectService.rollback(path)
-    return restoredProject
+    console.log('[IPC] project:undo', path)
+    try {
+      const restoredProject = await projectService.rollback(path)
+      return restoredProject
+    } catch (error) {
+      console.error('[IPC] project:undo error:', error)
+      throw error
+    }
   })
 }
 
@@ -173,11 +213,18 @@ function writeSettings(settings: Settings): void {
 
 export function setupSettingsHandlers() {
   ipcMain.handle('settings:read', async () => {
+    console.log('[IPC] settings:read')
     return readSettings()
   })
 
   ipcMain.handle('settings:write', async (_event, settings: Settings) => {
-    writeSettings(settings)
-    return true
+    console.log('[IPC] settings:write')
+    try {
+      writeSettings(settings)
+      return true
+    } catch (error) {
+      console.error('[IPC] settings:write error:', error)
+      throw error
+    }
   })
 }

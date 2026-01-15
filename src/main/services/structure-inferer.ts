@@ -3,11 +3,23 @@ import { randomUUID } from 'crypto'
 
 export class StructureInferer {
   inferOperations(rawOperations: TreeOperation[], currentTree: TreeNode[]): TreeOperation[] {
+    console.log(`[AI-Flow] Inferring structure for ${rawOperations.length} operations`)
     const refinedOps: TreeOperation[] = []
     const flatMap = this.flattenTree(currentTree)
 
     for (const op of rawOperations) {
       const refinedOp: TreeOperation = { ...op }
+
+      // If this is an add operation, we should assign an ID immediately
+      // so subsequent operations in this batch can reference it if needed.
+      if (op.type === 'add' && op.nodeData) {
+        const newId = randomUUID()
+        refinedOp.nodeData = { ...op.nodeData, id: newId }
+        // Register this new node in our map so children can find it
+        if (op.nodeData.name) {
+          flatMap.set(op.nodeData.name.toLowerCase(), newId)
+        }
+      }
 
       // 1. Resolve Parent ID for 'add'
       if (op.type === 'add') {
@@ -16,18 +28,13 @@ export class StructureInferer {
           if (parentId) {
             refinedOp.targetParentId = parentId
           } else {
-            // If parent not found by name, default to root (null) or logic to create parent
-            // For MVP: Default to root if name not found, but log it
-            console.warn(`Parent node '${op.targetParentName}' not found. Defaulting to root.`)
+            // If parent not found, it might be a root level addition or an error.
+            // For the specific case where AI tries to add to a parent it JUST created in previous lines,
+            // the logic above (adding to flatMap) should handle it.
+            // If still not found, default to root but warn.
+            console.warn(`[AI-Flow] WARN: Parent node '${op.targetParentName}' not found. Defaulting to root.`)
             refinedOp.targetParentId = null
           }
-        }
-        
-        // Ensure new node has basic data
-        if (refinedOp.nodeData) {
-           // If ID is missing, we let the renderer generate it, 
-           // OR we generate it here to be safe. Let's rely on store logic or generate if needed.
-           // But strictly, 'add' operations usually don't have ID yet.
         }
       }
 

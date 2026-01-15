@@ -88,12 +88,30 @@
     }
   }
 
+  let stopStreaming: (() => void) | null = null
+
   async function handleSendMessage(content: string) {
     if (!content.trim()) return
 
     try {
       chatStore.addUserMessage(content)
       chatStore.setLoading(true)
+
+      if (stopStreaming) stopStreaming()
+
+      // Initialize empty assistant message for streaming
+      chatStore.addAssistantMessage('')
+
+      // Setup Listener
+      const cleanupListener = window.electronAPI.ai.onStreamChunk((chunk) => {
+        chatStore.appendStreamChunk(chunk)
+      })
+
+      stopStreaming = () => {
+        cleanupListener()
+        stopStreaming = null
+        chatStore.setLoading(false)
+      }
 
       // Prepare context
       const history = $chatStore.messages.map(m => ({ role: m.role, content: m.content }))
@@ -113,15 +131,22 @@
       })
 
       // Handle response
-      chatStore.addAssistantMessage(result.textResponse)
+      chatStore.updateLastAssistantMessage(result.textResponse)
       projectStore.applyOperations(result.operations)
 
+      cleanupListener()
+      stopStreaming = null
     } catch (error) {
       console.error('Failed to send message:', error)
       toast.error('Failed to send message')
     } finally {
       chatStore.setLoading(false)
+      stopStreaming = null
     }
+  }
+
+  function handleStop() {
+    if (stopStreaming) stopStreaming()
   }
 
   function closeNewProjectDialog() {
@@ -153,7 +178,12 @@
           storageKey={$projectStore.projectPath ? `split-ratio-${$projectStore.projectPath}` : undefined}
         >
           {#snippet left()}
-            <ChatPanel messages={$chatStore.messages} onsend={handleSendMessage} />
+            <ChatPanel 
+              messages={$chatStore.messages} 
+              isLoading={$chatStore.isLoading}
+              onsend={handleSendMessage} 
+              onstop={handleStop}
+            />
           {/snippet}
           {#snippet right()}
             <div class="right-panel-container">

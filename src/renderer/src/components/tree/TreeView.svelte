@@ -1,6 +1,7 @@
 <script lang="ts">
   import { projectStore } from '../../stores/project-store'
   import { treeStore } from '../../stores/tree-store'
+  import type { TreeNode as TreeNodeType } from '$lib/types'
   import TreeNode from './TreeNode.svelte'
   import TreeContextMenu from './TreeContextMenu.svelte'
 
@@ -58,12 +59,66 @@
   function handleDragOver(e: DragEvent) {
     e.preventDefault() // Necessary to allow dropping
   }
+
+  function filterNodes(nodes: TreeNodeType[], term: string): TreeNodeType[] {
+    if (!term.trim()) return nodes
+    
+    return nodes.reduce<TreeNodeType[]>((acc, node) => {
+      const matchesSelf = node.name.toLowerCase().includes(term.toLowerCase())
+      const filteredChildren = filterNodes(node.children, term)
+      
+      if (matchesSelf || filteredChildren.length > 0) {
+        acc.push({
+            ...node,
+            children: filteredChildren
+        })
+      }
+      return acc
+    }, [])
+  }
+  
+  function handleSearch(e: Event) {
+    const term = (e.target as HTMLInputElement).value
+    searchTerm = term
+    
+    if (term.trim() && project) {
+      // Collect IDs to expand
+      const idsToExpand = new Set<string>()
+      
+      const check = (nodes: TreeNodeType[]) => {
+        let childMatch = false
+        for (const node of nodes) {
+          const childrenMatch = check(node.children)
+          if (childrenMatch) {
+            idsToExpand.add(node.id)
+            childMatch = true
+          }
+          if (node.name.toLowerCase().includes(term.toLowerCase())) {
+            childMatch = true
+          }
+        }
+        return childMatch
+      }
+      
+      check(project.structure_tree)
+      idsToExpand.forEach(id => treeStore.setExpanded(id, true))
+    }
+  }
+
+  let filteredTree = $derived(project ? filterNodes(project.structure_tree, searchTerm) : [])
 </script>
 
 <div class="tree-view-container">
   <div class="toolbar">
-    <input type="text" placeholder="Search..." bind:value={searchTerm} />
-    <button class="add-root" onclick={(e) => handleContextMenu(e, null)} title="Add Root Node">+</button>
+    <button class="add-root" onclick={(e) => handleContextMenu(e, null)} title="Add Root Node">
+      <span>+</span>
+    </button>
+    <input 
+      type="text" 
+      placeholder="Search..." 
+      value={searchTerm}
+      oninput={handleSearch}
+    />
   </div>
 
   <div 
@@ -74,7 +129,7 @@
     role="tree"
   >
     {#if project}
-      {#each project.structure_tree as node (node.id)}
+      {#each filteredTree as node (node.id)}
         <TreeNode 
           {node} 
           oncontextmenu={handleContextMenu}
@@ -111,8 +166,30 @@
     gap: 8px;
     border-bottom: 1px solid var(--color-border);
   }
-  .toolbar input { flex: 1; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--color-background-input); color: var(--color-text); }
-  .add-root { padding: 0 8px; cursor: pointer; }
+  .toolbar input { 
+    flex: 1; 
+    padding: 6px 10px; 
+    border-radius: 6px; 
+    border: 1px solid var(--color-border); 
+    background: var(--color-background-input); 
+    color: var(--color-text); 
+    font-size: 0.875rem;
+  }
+  .add-root { 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px; 
+    height: 30px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-background-soft);
+    color: var(--color-text);
+    cursor: pointer; 
+    font-size: 1.2rem;
+    padding: 0;
+  }
+  .add-root:hover { background: var(--ev-c-gray-3); }
 
   .tree-content { flex: 1; overflow-y: auto; padding-bottom: 20px; }
   .empty { padding: 20px; text-align: center; color: var(--ev-c-text-3); }
