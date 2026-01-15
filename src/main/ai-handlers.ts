@@ -5,6 +5,7 @@ import { OllamaService } from './services/ollama-service'
 import { ConversionEngine } from './services/conversion-engine'
 import type { LLMConfig, ChatMessage } from './services/llm-types'
 import type { TreeNode } from './services/ai-types'
+import { projectService } from './services/project-service'
 
 const openAIService = new OpenAIService()
 const deepSeekService = new DeepSeekService()
@@ -59,10 +60,15 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
   ipcMain.handle('ai:process-message', async (_event, {
     message,
     history,
+    projectPath,
     projectContext,
     config
-  }: { message: string, history: ChatMessage[], projectContext: TreeNode[], config: LLMConfig }) => {
+  }: { message: string, history: ChatMessage[], projectPath: string, projectContext: TreeNode[], config: LLMConfig }) => {
     const provider = getProvider(config)
+    
+    // Create checkpoint before AI operation
+    await projectService.createSnapshot(projectPath, 'Before AI Operation')
+    
     // Pass the provider instance to the engine
     return await conversionEngine.processMessage(message, history, projectContext, provider, config)
   })

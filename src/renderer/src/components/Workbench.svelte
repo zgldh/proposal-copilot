@@ -107,6 +107,7 @@
       const result = await window.electronAPI.ai.processMessage({
         message: content,
         history,
+        projectPath: $projectStore.projectPath!,
         projectContext,
         config
       })

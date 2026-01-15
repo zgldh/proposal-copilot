@@ -53,6 +53,8 @@ declare global {
       dialogOpenProject: () => Promise<string | null>
       projectCreate: (path: string, name: string) => Promise<string>
       projectRead: (path: string) => Promise<Record<string, unknown>>
+      projectSave: (path: string, data: any) => Promise<boolean>
+      projectUndo: (path: string) => Promise<Record<string, unknown> | null>
       settingsRead: () => Promise<Settings>
       settingsWrite: (settings: Settings) => Promise<boolean>
       ai: {
@@ -81,6 +83,8 @@ declare global {
       project: {
         create: (path: string, name: string) => Promise<string>
         read: (path: string) => Promise<Record<string, unknown>>
+        save: (path: string, data: any) => Promise<boolean>
+        undo: (path: string) => Promise<Record<string, unknown> | null>
       }
       settings: {
         read: () => Promise<Settings>
@@ -102,6 +106,8 @@ if (process.contextIsolated) {
       projectCreate: (path: string, name: string) =>
         ipcRenderer.invoke('project:create', path, name),
       projectRead: (path: string) => ipcRenderer.invoke('project:read', path),
+      projectSave: (path: string, data: any) => ipcRenderer.invoke('project:save', path, data),
+      projectUndo: (path: string) => ipcRenderer.invoke('project:undo', path),
       settingsRead: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
       settingsWrite: (settings: Settings) =>
         ipcRenderer.invoke('settings:write', settings) as Promise<boolean>,
@@ -141,7 +147,9 @@ if (process.contextIsolated) {
       },
       project: {
         create: (path: string, name: string) => ipcRenderer.invoke('project:create', path, name),
-        read: (path: string) => ipcRenderer.invoke('project:read', path)
+        read: (path: string) => ipcRenderer.invoke('project:read', path),
+        save: (path: string, data: any) => ipcRenderer.invoke('project:save', path, data),
+        undo: (path: string) => ipcRenderer.invoke('project:undo', path)
       },
       settings: {
         read: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
@@ -161,6 +169,8 @@ if (process.contextIsolated) {
     dialogOpenProject: () => ipcRenderer.invoke('dialog:openProject'),
     projectCreate: (path: string, name: string) => ipcRenderer.invoke('project:create', path, name),
     projectRead: (path: string) => ipcRenderer.invoke('project:read', path),
+    projectSave: (path: string, data: any) => ipcRenderer.invoke('project:save', path, data),
+    projectUndo: (path: string) => ipcRenderer.invoke('project:undo', path),
     settingsRead: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
     settingsWrite: (settings: Settings) =>
       ipcRenderer.invoke('settings:write', settings) as Promise<boolean>,

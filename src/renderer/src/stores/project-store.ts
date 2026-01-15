@@ -1,5 +1,6 @@
 import { writable, get } from 'svelte/store'
 import type { Project, TreeNode } from '$lib/types'
+import { toast } from './toast-store'
 
 interface ProjectState {
   currentProject: Project | null
@@ -273,11 +274,14 @@ function createProjectStore() {
     async save() {
       const state = get({ subscribe })
       if (!state.currentProject || !state.projectPath) return
-      await window.electronAPI.writeFile(
-        state.projectPath,
-        JSON.stringify(state.currentProject, null, 2)
-      )
-      update((s) => ({ ...s, isDirty: false }))
+      
+      try {
+        await window.electronAPI.projectSave(state.projectPath, state.currentProject)
+        update((s) => ({ ...s, isDirty: false }))
+      } catch (error) {
+        console.error('Save failed:', error)
+        toast.error('Failed to save project: ' + String(error))
+      }
     },
 
     applyOperations: (operations: TreeOperation[]) => {
@@ -332,6 +336,22 @@ function createProjectStore() {
           isDirty: true
         }
       })
+    },
+
+    undo: async () => {
+      const state = get({ subscribe })
+      if (!state.projectPath) return
+      try {
+        const previousProject = await window.electronAPI.projectUndo(state.projectPath)
+        if (previousProject) {
+          set({ currentProject: previousProject as Project, projectPath: state.projectPath, isDirty: false })
+          toast.success('Undo successful')
+        } else {
+          toast.info('Nothing to undo')
+        }
+      } catch (error) {
+        toast.error('Undo failed: ' + String(error))
+      }
     },
 
     clear: () => {

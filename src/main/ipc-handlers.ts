@@ -2,27 +2,7 @@ import { dialog, BrowserWindow, ipcMain } from 'electron'
 import { existsSync, writeFileSync, readFileSync, readdirSync } from 'fs'
 import { join, normalize } from 'path'
 import { app } from 'electron'
-
-interface ProjectMeta {
-  name: string
-  create_time: string
-  version: string
-}
-
-interface TreeNode {
-  id: string
-  type: 'subsystem' | 'device' | 'feature'
-  name: string
-  specs: Record<string, string>
-  quantity: number
-  children: TreeNode[]
-}
-
-export interface Project {
-  meta: ProjectMeta
-  context: string
-  structure_tree: TreeNode[]
-}
+import { projectService, Project } from './services/project-service'
 
 export interface ProviderConfig {
   id: string
@@ -85,31 +65,35 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
   })
 
   ipcMain.handle('project:create', async (_event, projectPath: string, projectName: string) => {
-    const project: Project = {
+    const initialProject = {
       meta: {
         name: projectName,
         create_time: new Date().toISOString(),
         version: '1.0.0'
       },
       context: '',
-      structure_tree: []
+      structure_tree: [] as any[]
     }
 
     const projectJsonPath = join(projectPath, 'project.json')
-    writeFileSync(projectJsonPath, JSON.stringify(project, null, 2))
-
+    // We use save which handles validation (though initial is valid) and formatting
+    await projectService.saveProject(projectJsonPath, initialProject as Project)
     return projectJsonPath
   })
 
   ipcMain.handle('project:read', async (_event, path: string) => {
-    const projectJsonPath = path.endsWith('project.json') ? path : join(path, 'project.json')
+    // ProjectService handles validation and migration on load
+    return await projectService.loadProject(path)
+  })
 
-    if (!existsSync(projectJsonPath)) {
-      throw new Error('project.json not found')
-    }
+  ipcMain.handle('project:save', async (_event, path: string, data: Project) => {
+    await projectService.saveProject(path, data)
+    return true
+  })
 
-    const content = readFileSync(projectJsonPath, 'utf-8')
-    return JSON.parse(content)
+  ipcMain.handle('project:undo', async (_event, path: string) => {
+    const restoredProject = await projectService.rollback(path)
+    return restoredProject
   })
 }
 

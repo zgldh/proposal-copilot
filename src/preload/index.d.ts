@@ -67,6 +67,8 @@ declare global {
       dialogOpenProject: () => Promise<string | null>
       projectCreate: (path: string, name: string) => Promise<string>
       projectRead: (path: string) => Promise<Project>
+      projectSave: (path: string, data: Project) => Promise<boolean>
+      projectUndo: (path: string) => Promise<Project | null>
       settingsRead: () => Promise<Settings>
       settingsWrite: (settings: Settings) => Promise<boolean>
       ai: {
@@ -82,6 +84,7 @@ declare global {
         processMessage: (params: {
           message: string
           history: ChatMessage[]
+          projectPath: string
           projectContext: TreeNode[]
           config: ProviderConfig
         }) => Promise<ConversionResult>
@@ -95,6 +98,8 @@ declare global {
       project: {
         create: (path: string, name: string) => Promise<string>
         read: (path: string) => Promise<Project>
+        save: (path: string, data: Project) => Promise<boolean>
+        undo: (path: string) => Promise<Project | null>
       }
       settings: {
         read: () => Promise<Settings>
