@@ -64,6 +64,7 @@ declare global {
         onStreamChunk: (callback: (chunk: string) => void) => () => void
         onStreamComplete: (callback: () => void) => () => void
         onStreamError: (callback: (error: string) => void) => () => void
+        cancelProcessing: () => Promise<void>
         ollama: {
           getModels: (baseUrl: string) => Promise<string[]>
         }
@@ -132,6 +133,7 @@ if (process.contextIsolated) {
           ipcRenderer.on('ai:stream-error', subscription)
           return () => ipcRenderer.removeListener('ai:stream-error', subscription)
         },
+        cancelProcessing: () => ipcRenderer.invoke('ai:cancelProcessing'),
         ollama: {
           getModels: (baseUrl: string) => ipcRenderer.invoke('ai:ollama:getModels', baseUrl)
         },
@@ -195,6 +197,7 @@ if (process.contextIsolated) {
         ipcRenderer.on('ai:stream-error', subscription)
         return () => ipcRenderer.removeListener('ai:stream-error', subscription)
       },
+      cancelProcessing: () => ipcRenderer.invoke('ai:cancelProcessing'),
       ollama: {
         getModels: (baseUrl: string) => ipcRenderer.invoke('ai:ollama:getModels', baseUrl)
       },

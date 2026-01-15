@@ -44,8 +44,12 @@ function createChatStore() {
     updateLastAssistantMessage(content: string) {
       update(state => {
         const messages = [...state.messages]
-        if (messages.length > 0 && messages[messages.length - 1].role === 'assistant') {
-          messages[messages.length - 1].content = content
+        const lastIndex = messages.length - 1
+        if (lastIndex >= 0 && messages[lastIndex].role === 'assistant') {
+          messages[lastIndex] = {
+            ...messages[lastIndex],
+            content
+          }
         }
         return { ...state, messages }
       })
@@ -54,8 +58,12 @@ function createChatStore() {
     appendStreamChunk(chunk: string) {
       update(state => {
         const messages = [...state.messages]
-        if (messages.length > 0 && messages[messages.length - 1].role === 'assistant') {
-          messages[messages.length - 1].content += chunk
+        const lastIndex = messages.length - 1
+        if (lastIndex >= 0 && messages[lastIndex].role === 'assistant') {
+          messages[lastIndex] = {
+            ...messages[lastIndex],
+            content: messages[lastIndex].content + chunk
+          }
         }
         return { ...state, messages }
       })

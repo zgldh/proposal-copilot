@@ -18,7 +18,8 @@ export class ConversionEngine {
     currentTree: TreeNode[],
     provider: LLMProvider,
     config: LLMConfig,
-    onChunk?: (chunk: string) => void
+    onChunk?: (chunk: string) => void,
+    options?: { signal?: AbortSignal }
   ): Promise<ConversionResult> {
     console.log('[AI-Flow] Processing message. Length:', message.length)
 
@@ -41,9 +42,9 @@ export class ConversionEngine {
       await provider.stream(messages, config, (chunk) => {
         rawResponse += chunk
         onChunk(chunk)
-      })
+      }, options)
     } else {
-      rawResponse = await provider.chat(messages, config)
+      rawResponse = await provider.chat(messages, config, options)
     }
     
     console.log('[AI-Flow] LLM Response received. Length:', rawResponse.length)

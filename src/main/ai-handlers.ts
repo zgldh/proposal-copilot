@@ -12,6 +12,8 @@ const deepSeekService = new DeepSeekService()
 const ollamaService = new OllamaService()
 const conversionEngine = new ConversionEngine()
 
+const activeAbortControllers = new Map<number, AbortController>()
+
 function getProvider(config: LLMConfig) {
   if (config.id === 'deepseek') {
     return deepSeekService
@@ -78,6 +80,16 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
     }
   })
 
+  ipcMain.handle('ai:cancelProcessing', (event) => {
+    const senderId = event.sender.id
+    const controller = activeAbortControllers.get(senderId)
+    if (controller) {
+      console.log('[IPC] ai:cancelProcessing aborting request for sender', senderId)
+      controller.abort()
+      activeAbortControllers.delete(senderId)
+    }
+  })
+
   ipcMain.handle('ai:process-message', async (event, {
     message,
     history,
@@ -86,6 +98,9 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
     config
   }: { message: string, history: ChatMessage[], projectPath: string, projectContext: TreeNode[], config: LLMConfig }) => {
     console.log('[IPC] ai:process-message', { projectPath, messageLength: message.length })
+    const senderId = event.sender.id
+    const controller = new AbortController()
+    activeAbortControllers.set(senderId, controller)
     const provider = getProvider(config)
     
     try {
@@ -105,11 +120,18 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
           if (!event.sender.isDestroyed()) {
             event.sender.send('ai:stream-chunk', chunk)
           }
-        }
+        },
+        { signal: controller.signal }
       )
+      activeAbortControllers.delete(senderId)
       console.log('[IPC] ai:process-message success', { operations: result.operations.length })
       return result
     } catch (error) {
+      activeAbortControllers.delete(senderId)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('[IPC] ai:process-message aborted')
+        throw error
+      }
       console.error('[IPC] ai:process-message error:', error)
       throw error
     }

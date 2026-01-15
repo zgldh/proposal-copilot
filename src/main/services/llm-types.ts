@@ -12,8 +12,8 @@ export interface LLMConfig {
 }
 
 export interface LLMProvider {
-  chat(messages: ChatMessage[], config: LLMConfig): Promise<string>
-  stream(messages: ChatMessage[], config: LLMConfig, onChunk: (chunk: string) => void): Promise<void>
+  chat(messages: ChatMessage[], config: LLMConfig, options?: { signal?: AbortSignal }): Promise<string>
+  stream(messages: ChatMessage[], config: LLMConfig, onChunk: (chunk: string) => void, options?: { signal?: AbortSignal }): Promise<void>
   testConnection(config: LLMConfig): Promise<boolean>
 }
 

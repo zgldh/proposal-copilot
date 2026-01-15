@@ -89,6 +89,7 @@
   }
 
   let stopStreaming: (() => void) | null = null
+  let isCancelled = false
 
   async function handleSendMessage(content: string) {
     if (!content.trim()) return
@@ -96,6 +97,7 @@
     try {
       chatStore.addUserMessage(content)
       chatStore.setLoading(true)
+      isCancelled = false
 
       if (stopStreaming) stopStreaming()
 
@@ -108,6 +110,8 @@
       })
 
       stopStreaming = () => {
+        isCancelled = true
+        window.electronAPI.ai.cancelProcessing()
         cleanupListener()
         stopStreaming = null
         chatStore.setLoading(false)
@@ -130,6 +134,8 @@
         config
       })
 
+      if (isCancelled) return
+
       // Handle response
       chatStore.updateLastAssistantMessage(result.textResponse)
       projectStore.applyOperations(result.operations)
@@ -137,8 +143,10 @@
       cleanupListener()
       stopStreaming = null
     } catch (error) {
-      console.error('Failed to send message:', error)
-      toast.error('Failed to send message')
+      if (!isCancelled) {
+        console.error('Failed to send message:', error)
+        toast.error('Failed to send message')
+      }
     } finally {
       chatStore.setLoading(false)
       stopStreaming = null
