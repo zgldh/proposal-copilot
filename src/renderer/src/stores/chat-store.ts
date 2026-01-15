@@ -1,9 +1,21 @@
 import { writable, get } from 'svelte/store'
 
+export interface GuidanceOption {
+  label: string
+  value: string
+}
+
+export interface GuidanceData {
+  intent: 'clarification' | 'suggestion'
+  text?: string
+  options: GuidanceOption[]
+}
+
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
   timestamp: number
+  guidance?: GuidanceData
 }
 
 interface ChatState {
@@ -41,14 +53,15 @@ function createChatStore() {
       this.addMessage('assistant', content)
     },
 
-    updateLastAssistantMessage(content: string) {
+    updateLastAssistantMessage(content: string, guidance?: GuidanceData) {
       update(state => {
         const messages = [...state.messages]
         const lastIndex = messages.length - 1
         if (lastIndex >= 0 && messages[lastIndex].role === 'assistant') {
           messages[lastIndex] = {
             ...messages[lastIndex],
-            content
+            content,
+            guidance
           }
         }
         return { ...state, messages }

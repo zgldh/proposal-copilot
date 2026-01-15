@@ -51,10 +51,21 @@ interface TreeOperation {
   targetNodeName?: string
 }
 
+interface GuidanceOption {
+  label: string
+  value: string
+}
+
+interface GuidanceData {
+  intent: 'clarification' | 'suggestion'
+  text?: string
+  options: GuidanceOption[]
+}
+
 interface ConversionResult {
   textResponse: string
   operations: TreeOperation[]
-  needsClarification?: boolean
+  guidance?: GuidanceData
 }
 
 declare global {

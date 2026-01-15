@@ -226,7 +226,7 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
 ### 已创建的高优先级任务文件
 
 1. `docs/tasks/ui/TASK-UI-001.md` - ✅项目树可视化组件
-2. `docs/tasks/ui/TASK-UI-002.md` - UI/UX增强 - 流式输出、搜索修复、布局优化
+2. `docs/tasks/ui/TASK-UI-002.md` - ✅UI/UX增强 - 流式输出、搜索修复、布局优化
 3. `docs/tasks/ai/TASK-AI-001.md` - ✅OpenAI 集成
 4. `docs/tasks/ai/TASK-AI-002.md` - ✅DeepSeek 集成
 5. `docs/tasks/ai/TASK-AI-003.md` - ✅Ollama 本地集成

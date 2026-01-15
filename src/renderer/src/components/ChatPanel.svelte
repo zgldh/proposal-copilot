@@ -1,8 +1,19 @@
 <script lang="ts">
   import { marked } from 'marked'
 
+  interface GuidanceOption {
+    label: string
+    value: string
+  }
+
+  interface GuidanceData {
+    intent: 'clarification' | 'suggestion'
+    text?: string
+    options: GuidanceOption[]
+  }
+
   interface Props {
-    messages?: Array<{ role: 'user' | 'assistant'; content: string }>
+    messages?: Array<{ role: 'user' | 'assistant'; content: string; guidance?: GuidanceData }>
     isLoading?: boolean
     onsend?: (content: string) => void
     onstop?: () => void
@@ -60,8 +71,9 @@
 
   function formatContent(content: string): string {
     // Remove JSON command blocks (typically at the end of AI response)
-    // Matches ```json [ ... ] ``` or just ``` [ ... ] ``` if it contains a JSON array
-    const jsonBlockRegex = /```(?:json)?\s*\[[\s\S]*?\]\s*```$/
+    // Matches ```json { ... } ``` or ```json [ ... ] ```
+    // Updated to match both object and array formats loosely
+    const jsonBlockRegex = /```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```$/
     const cleaned = content.replace(jsonBlockRegex, '').trim()
     return marked.parse(cleaned) as string
   }
@@ -84,6 +96,21 @@
             {@html formatContent(message.content)}
             {#if message.role === 'assistant' && isLoading && message === messages[messages.length - 1]}
               <span class="cursor"></span>
+            {/if}
+            
+            {#if message.guidance && message.guidance.options && message.guidance.options.length > 0}
+              <div class="guidance-container">
+                {#if message.guidance.text}
+                  <p class="guidance-text">{message.guidance.text}</p>
+                {/if}
+                <div class="guidance-options">
+                  {#each message.guidance.options as option}
+                    <button class="guidance-btn" onclick={() => onsend?.(option.value)}>
+                      {option.label}
+                    </button>
+                  {/each}
+                </div>
+              </div>
             {/if}
           </div>
         </div>
@@ -300,5 +327,40 @@
   .send-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* Guidance UI */
+  .guidance-container {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  .message.assistant .guidance-container {
+    border-top-color: rgba(0, 0, 0, 0.05);
+  }
+  .guidance-text {
+    font-size: 0.85rem;
+    color: var(--ev-c-text-2);
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+  .guidance-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .guidance-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border: 1px solid var(--ev-c-primary);
+    background: var(--color-background);
+    color: var(--ev-c-primary);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .guidance-btn:hover {
+    background: var(--ev-c-primary);
+    color: var(--color-background);
   }
 </style>

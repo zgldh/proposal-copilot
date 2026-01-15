@@ -137,7 +137,7 @@
       if (isCancelled) return
 
       // Handle response
-      chatStore.updateLastAssistantMessage(result.textResponse)
+      chatStore.updateLastAssistantMessage(result.textResponse, result.guidance)
       projectStore.applyOperations(result.operations)
 
       cleanupListener()

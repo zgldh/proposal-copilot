@@ -59,7 +59,8 @@ export class ConversionEngine {
 
     return {
       textResponse: parsedResult.textResponse,
-      operations
+      operations,
+      guidance: parsedResult.guidance
     }
   }
 

@@ -20,9 +20,19 @@ export interface TreeOperation {
   targetNodeName?: string
 }
 
+export interface GuidanceOption {
+  label: string
+  value: string
+}
+
+export interface GuidanceData {
+  intent: 'clarification' | 'suggestion'
+  text?: string
+  options: GuidanceOption[]
+}
+
 export interface ConversionResult {
   textResponse: string // The conversational part
   operations: TreeOperation[] // The structural changes
-  needsClarification?: boolean
-  clarificationQuestion?: string
+  guidance?: GuidanceData
 }

@@ -21,19 +21,28 @@ OUTPUT FORMAT:
 <Conversational Text>
 
 \`\`\`json
-[
-  {
-    "type": "add" | "update" | "delete",
-    "targetParentName": "Name of parent node (for add)",
-    "targetNodeName": "Name of node to update/delete",
-    "nodeData": {
-      "type": "subsystem" | "device" | "feature",
-      "name": "New Node Name",
-      "quantity": 1,
-      "specs": { "key": "value" }
+{
+  "operations": [
+    {
+      "type": "add" | "update" | "delete",
+      "targetParentName": "Name of parent node (for add)",
+      "targetNodeName": "Name of node to update/delete",
+      "nodeData": {
+        "type": "subsystem" | "device" | "feature",
+        "name": "New Node Name",
+        "quantity": 1,
+        "specs": { "key": "value" }
+      }
     }
+  ],
+  "guidance": {
+    "intent": "clarification" | "suggestion",
+    "text": "Optional specific question text",
+    "options": [
+      { "label": "Short Label", "value": "Full text to send back to AI" }
+    ]
   }
-]
+}
 \`\`\`
 
 RULES:
@@ -42,24 +51,40 @@ RULES:
 - If the user asks to "Add Security subsystem", set "targetParentName": null (Root).
 - For "nodeData", "type" and "name" are required for additions.
 - "quantity" defaults to 1.
-- Do NOT output the JSON object with "text" and "operations" keys. Use the Text + JSON Block format.
+- Use "guidance" ONLY when the request is ambiguous or you need to suggest standard breakdowns.
+- If no guidance or operations are needed, they can be empty or omitted.
 `
   }
 
   extract(rawResponse: string): ConversionResult {
     console.log('[AI-Flow] Extracting entities...')
-    // Look for a code block containing a JSON array
-    const jsonBlockRegex = /```(?:json)?\s*(\[[\s\S]*?\])\s*```/
+    // Look for a code block containing JSON (Object or Array)
+    const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/
     const match = rawResponse.match(jsonBlockRegex)
     
     let textResponse = rawResponse
     let operations: any[] = []
+    let guidance: any = undefined
 
     if (match) {
       console.log('[AI-Flow] JSON code block found.')
       try {
-        operations = JSON.parse(match[1])
-        console.log('[AI-Flow] JSON parsed successfully. Operations count:', operations.length)
+        const parsed = JSON.parse(match[1])
+        
+        if (Array.isArray(parsed)) {
+          // Legacy array format
+          operations = parsed
+        } else if (typeof parsed === 'object') {
+          // New Object format
+          if (Array.isArray(parsed.operations)) {
+            operations = parsed.operations
+          }
+          if (parsed.guidance) {
+            guidance = parsed.guidance
+          }
+        }
+
+        console.log('[AI-Flow] JSON parsed. Ops:', operations.length, 'Guidance:', !!guidance)
         // Remove the code block from the text response for final display
         textResponse = rawResponse.replace(match[0], '').trim()
       } catch (e) {
@@ -84,7 +109,8 @@ RULES:
     
     return {
       textResponse,
-      operations
+      operations,
+      guidance
     }
   }
 }
