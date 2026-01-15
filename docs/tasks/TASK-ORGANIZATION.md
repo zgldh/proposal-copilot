@@ -6,21 +6,21 @@
 
 | 优先级   | 任务数量 | 百分比   | 预计总时间    |
 | -------- | -------- | -------- | ------------- |
-| 高       | 18       | 49%      | 32-48 天      |
-| 中       | 13       | 35%      | 24-36 天      |
-| 低       | 6        | 16%      | 11-18 天      |
-| **总计** | **37**   | **100%** | **67-102 天** |
+| 高       | 21       | 50%      | 38-57 天      |
+| 中       | 15       | 36%      | 27-40 天      |
+| 低       | 6        | 14%      | 11-18 天      |
+| **总计** | **42**   | **100%** | **76-115 天** |
 
 ### 按阶段统计
 
-| 阶段                 | 任务数量 | 关键任务                   | 预计时间     |
-| -------------------- | -------- | -------------------------- | ------------ |
-| 阶段 1: 核心基础设施 | 8        | TASK-UI-001, TASK-CORE-001 | 14-21 天     |
-| 阶段 2: AI 对话引擎  | 8        | TASK-AI-001, TASK-AI-005   | 15-23 天     |
-| 阶段 3: 文档生成引擎 | 7        | TASK-DOC-001, TASK-DOC-005 | 16-24 天     |
-| 阶段 4: 高级功能     | 4        | TASK-ADV-001, TASK-ADV-003 | 7-11 天      |
-| 阶段 5: 质量和运维   | 6        | TASK-QA-001, TASK-OPS-001  | 9-14 天      |
-| **总计**             | **37**   | -                          | **61-93 天** |
+| 阶段                 | 任务数量 | 关键任务                                  | 预计时间      |
+| -------------------- | -------- | ----------------------------------------- | ------------- |
+| 阶段 1: 核心基础设施 | 9        | TASK-UI-001, TASK-CORE-001, TASK-CORE-002 | 17-25 天      |
+| 阶段 2: AI 对话引擎  | 11       | TASK-AI-001, TASK-AI-005, TASK-AI-006     | 19-28 天      |
+| 阶段 3: 文档生成引擎 | 7        | TASK-DOC-001, TASK-DOC-005                | 16-24 天      |
+| 阶段 4: 高级功能     | 4        | TASK-ADV-001, TASK-ADV-003                | 7-11 天       |
+| 阶段 5: 质量和运维   | 6        | TASK-QA-001, TASK-OPS-001                 | 9-14 天       |
+| **总计**             | **42**   | -                                         | **68-102 天** |
 
 ## 关键路径任务
 
@@ -29,14 +29,14 @@
 ```
 TASK-UI-001 (2-3天)
     ↓
-TASK-CORE-001 (2-3天)
+TASK-CORE-001 (2-3天) → TASK-CORE-002 (3-4天)
     ↓
 TASK-AI-001 (1-2天) → TASK-AI-005 (3-4天)
     ↓
-TASK-UI-005 (1-2天)
+TASK-UI-002 (3-4天) → TASK-AI-006 (4-5天)
 ```
 
-**MVP 总时间**: 9-14 天
+**MVP 总时间**: 16-22 天
 
 ### 文档生成版本（里程碑 2）关键路径
 
@@ -67,9 +67,11 @@ TASK-OPS-001 (2-3天) → TASK-OPS-002 (1-2天)
 ```
 TASK-UI-001 (项目树可视化)
     ↑
-TASK-CORE-001 (数据模型增强) → TASK-UI-005 (聊天面板增强)
+TASK-CORE-001 (数据模型增强) → TASK-CORE-002 (实时持久化)
     ↑
 TASK-AI-001 (OpenAI集成) → TASK-AI-005 (对话转换)
+    ↓
+TASK-UI-002 (UI/UX增强) → TASK-AI-006 (对话深度增强)
 ```
 
 ### 第二阶段依赖图
@@ -110,8 +112,10 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
 - TASK-AI-001: OpenAI 集成
 - TASK-AI-002: DeepSeek 集成
 - TASK-AI-003: Ollama 本地集成
+- TASK-AI-007: AI搜索能力增强
+- TASK-AI-008: 多模态支持
 
-**并行时间**: 1-2 天（而非 3-6 天）
+**并行时间**: 2-3 天（而非 8-12 天）
 
 #### 组 3: 文档引擎组件（部分并行）
 
@@ -136,7 +140,7 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
 
 团队 C (AI/算法): 2人
   - 负责: TASK-AI-001 到 TASK-AI-008
-  - 技能: LLM 集成, 自然语言处理
+  - 技能: LLM 集成, 自然语言处理, 多模态处理
 
 团队 D (文档引擎): 2人
   - 负责: TASK-DOC-001 到 TASK-DOC-007
@@ -152,26 +156,25 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
   团队C: TASK-AI-001
   团队D: 技术调研和准备
 
-第3-4周: 阶段2 AI引擎 (团队C主导)
-  团队C: TASK-AI-005, TASK-AI-002, TASK-AI-003
+第3-5周: 阶段2 AI引擎 (团队C主导)
+  团队C: TASK-AI-005, TASK-AI-006, TASK-AI-007, TASK-AI-008
   团队A: TASK-UI-002, TASK-UI-003
   团队B: TASK-CORE-002, TASK-CORE-003
   团队D: TASK-DOC-001 开始
 
-第5-7周: 阶段3文档引擎 (团队D主导)
+第6-8周: 阶段3文档引擎 (团队D主导)
   团队D: TASK-DOC-002 到 TASK-DOC-007
   团队A: TASK-UI-004, TASK-UI-006
   团队B: TASK-CORE-004, TASK-CORE-005
-  团队C: TASK-AI-004, TASK-AI-006
+  团队C: TASK-AI-004, TASK-AI-009
 
-第8-9周: 阶段4高级功能 (所有团队)
+第9-10周: 阶段4高级功能 (所有团队)
   并行开发高级功能
 
-第10周: 阶段5质量和运维 (所有团队)
+第11-12周: 阶段5质量和运维 (所有团队)
   测试、优化、打包
-```
 
-**优化后总时间**: 10周（约50个工作日）
+**优化后总时间**: 12周（约60个工作日）
 
 ## 风险评估和缓解
 
@@ -223,20 +226,25 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
 ### 已创建的高优先级任务文件
 
 1. `docs/tasks/ui/TASK-UI-001.md` - ✅项目树可视化组件
-2. `docs/tasks/ai/TASK-AI-001.md` - ✅OpenAI 集成
-3. `docs/tasks/ai/TASK-AI-002.md` - ✅DeepSeek 集成
-4. `docs/tasks/ai/TASK-AI-003.md` - ✅Ollama 本地集成
-5. `docs/tasks/ai/TASK-AI-005.md` - ✅对话到项目树转换
-6. `docs/tasks/core/TASK-CORE-001.md` - 项目数据模型增强
-7. `docs/tasks/doc/TASK-DOC-001.md` - 参考文档解析
+2. `docs/tasks/ui/TASK-UI-002.md` - ✅UI/UX增强 - 流式输出、搜索修复、布局优化
+3. `docs/tasks/ai/TASK-AI-001.md` - ✅OpenAI 集成
+4. `docs/tasks/ai/TASK-AI-002.md` - ✅DeepSeek 集成
+5. `docs/tasks/ai/TASK-AI-003.md` - ✅Ollama 本地集成
+6. `docs/tasks/ai/TASK-AI-005.md` - ✅对话到项目树转换
+7. `docs/tasks/ai/TASK-AI-006.md` - AI对话深度增强 - 设问式响应与引导
+8. `docs/tasks/ai/TASK-AI-007.md` - AI搜索能力增强 - 知识不足时的外部搜索
+9. `docs/tasks/ai/TASK-AI-008.md` - 多模态支持 - 图片输入功能
+10. `docs/tasks/core/TASK-CORE-001.md` - ✅项目数据模型增强
+11. `docs/tasks/core/TASK-CORE-002.md` - 实时持久化 - 数据实时保存与同步
+12. `docs/tasks/doc/TASK-DOC-001.md` - 参考文档解析
 
 ### 需要创建的其他高优先级任务
 
-8. `docs/tasks/ui/TASK-UI-005.md` - 聊天面板增强
-9. `docs/tasks/doc/TASK-DOC-002.md` - 内容生成
-10. `docs/tasks/doc/TASK-DOC-005.md` - BOM 扁平化
-11. `docs/tasks/qa/TASK-QA-001.md` - 单元测试
-12. `docs/tasks/ops/TASK-OPS-001.md` - 多平台打包
+13. `docs/tasks/ui/TASK-UI-005.md` - 聊天面板增强
+14. `docs/tasks/doc/TASK-DOC-002.md` - 内容生成
+15. `docs/tasks/doc/TASK-DOC-005.md` - BOM 扁平化
+16. `docs/tasks/qa/TASK-QA-001.md` - 单元测试
+17. `docs/tasks/ops/TASK-OPS-001.md` - 多平台打包
 
 ## 下一步行动
 
@@ -263,5 +271,6 @@ TASK-ADV-001  TASK-ADV-003  TASK-QA系列
 
 ---
 
-_最后更新：2026-01-14_
-_版本：v1.0_
+_最后更新：2026-01-15_
+_版本：v1.1_
+```
