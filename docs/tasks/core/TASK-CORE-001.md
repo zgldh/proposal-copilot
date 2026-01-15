@@ -12,7 +12,7 @@
 
 ## 任务描述
 
-增强现有的项目数据模型，添加数据验证、版本迁移、完整性检查和备份恢复机制。确保项目数据的可靠性和稳定性，为后续功能开发奠定坚实基础。
+增强现有的项目数据模型，添加数据验证、版本迁移、完整性检查和智能检查点系统。确保项目数据的可靠性和稳定性，为 AI 操作提供可撤销的安全机制，为后续功能开发奠定坚实基础。
 
 ## 功能需求
 
@@ -38,12 +38,14 @@
 - 数据一致性验证
 - 自动修复机制
 
-### 4. 备份和恢复
+### 4. 智能检查点系统
 
-- 自动备份策略
-- 手动备份支持
-- 恢复点管理
-- 差异备份优化
+- **自动创建**: AI 修改项目数据前自动创建检查点
+- **轻量级快照**: 仅保存关键数据状态，而非完整备份
+- **滚动保留**: 保留最近 20 个检查点或 24 小时内的检查点
+- **操作回滚**: 支持撤销到任意检查点
+- **操作历史**: 记录每次 AI 操作的描述和类型
+- **失败恢复**: AI 操作失败时自动回滚到操作前状态
 
 ### 5. 导入/导出
 
@@ -76,9 +78,23 @@ interface EnhancedProject extends Project {
     warnings: ValidationWarning[]
     last_validated: string
   }
+}
 
-  // 备份信息
-  backups?: BackupInfo[]
+// 检查点定义
+interface Checkpoint {
+  id: string
+  timestamp: string
+  operation_type: string
+  operation_description: string
+  snapshot: ProjectSnapshot
+  parent_checkpoint_id?: string
+}
+
+// 项目快照（轻量级）
+interface ProjectSnapshot {
+  structure_tree: TreeNode[]
+  context: string
+  checksum: string
 }
 
 // 验证错误类型
@@ -88,16 +104,6 @@ interface ValidationError {
   code: string
   severity: 'error' | 'warning' | 'info'
   fix?: string
-}
-
-// 备份信息
-interface BackupInfo {
-  id: string
-  timestamp: string
-  path: string
-  size: number
-  checksum: string
-  description?: string
 }
 ```
 
@@ -172,7 +178,7 @@ interface BackupInfo {
 
 - `src/main/services/project-validator.ts` - 数据验证服务
 - `src/main/services/migration-service.ts` - 版本迁移服务
-- `src/main/services/backup-service.ts` - 备份恢复服务
+- `src/main/services/checkpoint-manager.ts` - 检查点管理服务
 - `schemas/project-schema.json` - JSON Schema 定义
 - `migrations/` - 迁移脚本目录
 - `src/renderer/src/stores/project-store.ts` - 项目存储更新
@@ -193,12 +199,13 @@ interface BackupInfo {
 3. 实现 `migration-service.ts`
 4. 添加版本检测和自动升级
 
-### 步骤 3: 实现备份恢复
+### 步骤 3: 实现检查点系统
 
-1. 设计备份策略（时间点、差异备份）
-2. 实现 `backup-service.ts`
-3. 添加自动备份调度
-4. 实现恢复流程
+1. 设计检查点管理器接口
+2. 实现 `checkpoint-manager.ts` 服务
+3. 集成到 AI 操作流程（conversion-engine, ai-handlers）
+4. 添加 IPC 处理器支持撤销/重做
+5. 实现滚动保留策略
 
 ### 步骤 4: 集成和测试
 
@@ -213,8 +220,9 @@ interface BackupInfo {
 
 - [ ] JSON Schema 验证正常工作
 - [ ] 版本迁移支持至少 3 个版本
-- [ ] 自动备份按策略执行
-- [ ] 数据恢复功能完整
+- [ ] AI 操作前自动创建检查点
+- [ ] 支持撤销到任意检查点
+- [ ] 检查点滚动保留策略正常工作
 - [ ] 导入/导出功能正常
 - [ ] 错误处理完善
 
@@ -222,14 +230,14 @@ interface BackupInfo {
 
 - [ ] 无效数据被正确拒绝
 - [ ] 迁移过程数据不丢失
-- [ ] 备份数据可完整恢复
+- [ ] 检查点快照可完整恢复
 - [ ] 引用完整性保持
 
 ### 性能验收
 
 - [ ] 验证时间 < 100ms（中等项目）
 - [ ] 迁移时间 < 1秒
-- [ ] 备份创建时间 < 500ms
+- [ ] 检查点创建时间 < 50ms
 - [ ] 内存使用合理
 
 ## 迁移示例
@@ -266,17 +274,55 @@ function addDefaultQuantities(nodes: any[]): any[] {
 }
 ```
 
+## 检查点系统使用示例
+
+### AI 操作集成
+
+```typescript
+// AI 操作前自动创建检查点
+async function applyAIChanges(changes: TreeOperation[]): Promise<void> {
+  const checkpoint = await checkpointManager.createCheckpoint(
+    'ai_tree_modification',
+    `AI应用${changes.length}个树结构变更`
+  )
+
+  try {
+    await this.applyChanges(changes)
+  } catch (error) {
+    // 自动回滚
+    await checkpointManager.rollbackToCheckpoint(checkpoint.id)
+    throw error
+  }
+}
+```
+
+### UI 撤销支持
+
+```typescript
+// 撤销到上一个检查点
+ipcMain.handle('checkpoint:undo', async () => {
+  const latest = checkpointManager.getLatest()
+  if (latest) {
+    await checkpointManager.rollbackToCheckpoint(latest.id)
+    return true
+  }
+  return false
+})
+```
+
 ## 错误处理策略
 
 1. **验证错误**: 提供详细错误信息和修复建议
 2. **迁移失败**: 保留原始文件，提供手动迁移选项
-3. **备份失败**: 记录错误，继续主流程
-4. **恢复失败**: 提供多个恢复点选择
+3. **检查点创建失败**: 记录错误，允许继续操作（风险提示）
+4. **回滚失败**: 提供多个恢复点选择
+5. **AI 操作失败**: 自动回滚到操作前检查点
 
 ## 相关文件
 
 - `architecture/domain/ARCH-domain-project-structure-v1.md` - 数据模型架构
 - `src/main/ipc-handlers.ts` - 项目相关 IPC 处理器
+- `src/main/ai-handlers.ts` - AI 操作处理器（集成检查点）
 - `package.json` - 可能的依赖添加（ajv 用于 JSON Schema 验证）
 
 ## 依赖管理
@@ -286,15 +332,18 @@ function addDefaultQuantities(nodes: any[]): any[] {
 - `ajv` - JSON Schema 验证
 - `ajv-formats` - 格式验证支持
 - `uuid` - UUID 生成和验证
+- `lru-cache` (可选) - 检查点缓存优化
 
 ## 测试计划
 
-1. **单元测试**: 验证、迁移、备份服务测试
+1. **单元测试**: 验证、迁移、检查点管理服务测试
 2. **集成测试**: 完整工作流测试
 3. **数据测试**: 各种数据场景测试
 4. **性能测试**: 大数据量测试
+5. **撤销回滚测试**: 多次撤销、跨检查点回滚测试
 
 ---
 
 _创建时间: 2026-01-14_
+_更新时间: 2026-01-15_
 _负责人: @team-backend_
