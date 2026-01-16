@@ -22,6 +22,8 @@ OUTPUT FORMAT:
 
 \`\`\`json
 {
+  "tool": "search", // Optional: Use ONLY if you lack specific info (specs, prices) to answer.
+  "query": "search query string",
   "operations": [
     {
       "type": "add" | "update" | "delete",
@@ -50,6 +52,7 @@ RULES:
 - If the user asks to "Add cameras to Security", and "Security" exists, set "targetParentName": "Security".
 - If the user asks to "Add Security subsystem", set "targetParentName": null (Root).
 - For "nodeData", "type" and "name" are required for additions.
+- If you need external information (e.g., "What are the specs of X?", "Compare X and Y", "Price of Z"), output ONLY "tool": "search" and the "query". Do not output operations yet.
 - "quantity" defaults to 1.
 - Use "guidance" ONLY when the request is ambiguous or you need to suggest standard breakdowns.
 - If no guidance or operations are needed, they can be empty or omitted.
@@ -65,6 +68,7 @@ RULES:
     let textResponse = rawResponse
     let operations: any[] = []
     let guidance: any = undefined
+    let searchRequest: any = undefined
 
     if (match) {
       console.log('[AI-Flow] JSON code block found.')
@@ -81,6 +85,11 @@ RULES:
           }
           if (parsed.guidance) {
             guidance = parsed.guidance
+          }
+          if (parsed.tool === 'search' && parsed.query) {
+            searchRequest = { tool: 'search', query: parsed.query }
+            // If searching, we usually stop operations/guidance for this turn, or keep them empty
+            // operations = [] 
           }
         }
 
@@ -110,7 +119,8 @@ RULES:
     return {
       textResponse,
       operations,
-      guidance
+      guidance,
+      searchRequest
     }
   }
 }

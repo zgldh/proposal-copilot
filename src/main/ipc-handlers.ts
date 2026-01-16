@@ -16,6 +16,8 @@ export interface Settings {
   theme: 'light' | 'dark'
   active_provider_id: string
   providers: Record<string, ProviderConfig>
+  search_provider: 'mock' | 'tavily'
+  search_api_key: string
 }
 
 export function setupProjectHandlers(mainWindow: BrowserWindow) {
@@ -149,10 +151,11 @@ function readSettings(): Settings {
   const content = readFileSync(SETTINGS_PATH, 'utf-8')
   const raw = JSON.parse(content)
 
+  const defaults = createDefaultSettings()
   // Migration logic: convert legacy settings if 'llm_provider' exists
   if (raw.llm_provider) {
     const legacy = raw.llm_provider
-    const defaultSettings = createDefaultSettings()
+    const defaultSettings = defaults
 
     // Map legacy values to the appropriate provider in new structure
     const targetId =
@@ -174,7 +177,10 @@ function readSettings(): Settings {
     return defaultSettings
   }
 
-  return raw
+  // Merge with defaults to ensure new fields (like search_provider) exist
+  const merged = { ...defaults, ...raw }
+  // Ensure providers object is also merged correctly if keys are missing? For now top level merge is sufficient for scalar new fields.
+  return merged
 }
 
 function createDefaultSettings(): Settings {
@@ -203,7 +209,9 @@ function createDefaultSettings(): Settings {
         base_url: 'http://localhost:11434',
         model: ''
       }
-    }
+    },
+    search_provider: 'mock',
+    search_api_key: ''
   }
 }
 

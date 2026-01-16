@@ -6,6 +6,7 @@ import { ConversionEngine } from './services/conversion-engine'
 import type { LLMConfig, ChatMessage } from './services/llm-types'
 import type { TreeNode } from './services/ai-types'
 import { projectService } from './services/project-service'
+import type { Settings } from './ipc-handlers'
 
 const openAIService = new OpenAIService()
 const deepSeekService = new DeepSeekService()
@@ -95,8 +96,9 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
     history,
     projectPath,
     projectContext,
-    config
-  }: { message: string, history: ChatMessage[], projectPath: string, projectContext: TreeNode[], config: LLMConfig }) => {
+    config,
+    settings
+  }: { message: string, history: ChatMessage[], projectPath: string, projectContext: TreeNode[], config: LLMConfig, settings: Settings }) => {
     console.log('[IPC] ai:process-message', { projectPath, messageLength: message.length })
     const senderId = event.sender.id
     const controller = new AbortController()
@@ -115,6 +117,7 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
         projectContext,
         provider,
         config,
+        settings,
         (chunk) => {
           // Ensure sender still exists
           if (!event.sender.isDestroyed()) {

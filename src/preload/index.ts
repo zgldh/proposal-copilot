@@ -17,6 +17,8 @@ interface Settings {
   theme: 'light' | 'dark'
   active_provider_id: string
   providers: Record<string, ProviderConfig>
+  search_provider: 'mock' | 'tavily'
+  search_api_key: string
 }
 
 interface TreeNode {
@@ -48,10 +50,16 @@ interface GuidanceData {
   options: GuidanceOption[]
 }
 
+interface SearchRequest {
+  tool: 'search'
+  query: string
+}
+
 interface ConversionResult {
   textResponse: string
   operations: TreeOperation[]
   guidance?: GuidanceData
+  searchRequest?: SearchRequest
 }
 
 declare global {
@@ -84,6 +92,7 @@ declare global {
           history: ChatMessage[]
           projectContext: TreeNode[]
           config: ProviderConfig
+          settings: Settings
         }) => Promise<ConversionResult>
       }
     }

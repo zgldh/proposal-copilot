@@ -31,8 +31,20 @@ export interface GuidanceData {
   options: GuidanceOption[]
 }
 
+export interface SearchRequest {
+  tool: 'search'
+  query: string
+}
+
+export interface SearchResult {
+  title: string
+  content: string
+  url: string
+}
+
 export interface ConversionResult {
   textResponse: string // The conversational part
   operations: TreeOperation[] // The structural changes
   guidance?: GuidanceData
+  searchRequest?: SearchRequest
 }
