@@ -45,17 +45,22 @@ export class ConversionEngine {
     // 4. Check for Search Request (Max 1 hop for MVP)
     if (rawResult.searchRequest) {
       console.log('[AI-Flow] Search requested:', rawResult.searchRequest.query)
-      
+      console.log('[AI-Flow] Search Settings:', {
+        provider: settings?.search_provider,
+        hasApiKey: !!settings?.search_api_key
+      })
+
       // Execute Search
       const searchResults = await this.searchService.search(rawResult.searchRequest.query, {
-        provider: settings.search_provider,
-        apiKey: settings.search_api_key
+        provider: settings?.search_provider || 'mock',
+        apiKey: settings?.search_api_key || ''
       })
 
       // Construct Search Context
-      const searchContext = `[System] Search Results for "${rawResult.searchRequest.query}":\n` + 
-        searchResults.map(r => `Source: ${r.title}\n${r.content}`).join('\n\n')
-      
+      const searchContext =
+        `[System] Search Results for "${rawResult.searchRequest.query}":\n` +
+        searchResults.map((r) => `Source: ${r.title}\n${r.content}`).join('\n\n')
+
       // Augment History for 2nd Pass
       messages = [
         { role: 'system', content: systemPrompt },
@@ -65,7 +70,7 @@ export class ConversionEngine {
       ]
 
       console.log('[AI-Flow] Re-prompting with search results...')
-      
+
       // 5. Second Pass
       rawResult = await this.executeTurn(messages, provider, llmConfig, onChunk, options)
     }
@@ -90,14 +95,19 @@ export class ConversionEngine {
     console.log('[AI-Flow] Sending request to LLM. Provider:', config.id, 'Model:', config.model)
     let rawResponse = ''
     if (onChunk) {
-      await provider.stream(messages, config, (chunk) => {
-        rawResponse += chunk
-        onChunk(chunk)
-      }, options)
+      await provider.stream(
+        messages,
+        config,
+        (chunk) => {
+          rawResponse += chunk
+          onChunk(chunk)
+        },
+        options
+      )
     } else {
       rawResponse = await provider.chat(messages, config, options)
     }
-    
+
     console.log('[AI-Flow] LLM Response received. Length:', rawResponse.length)
 
     const parsedResult = this.entityExtractor.extract(rawResponse)
@@ -111,7 +121,7 @@ export class ConversionEngine {
   }
 
   private simplifyTreeForPrompt(nodes: TreeNode[]): any[] {
-    return nodes.map(node => ({
+    return nodes.map((node) => ({
       id: node.id,
       type: node.type,
       name: node.name,

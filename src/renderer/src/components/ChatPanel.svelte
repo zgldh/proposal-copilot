@@ -15,7 +15,7 @@
   interface Props {
     messages?: Array<{ role: 'user' | 'assistant'; content: string; guidance?: GuidanceData }>
     isLoading?: boolean
-    onsend?: (content: string) => void
+    onsend?: (content: string, images?: string[]) => void
     onstop?: () => void
   }
 
@@ -26,10 +26,39 @@
   let textarea: HTMLTextAreaElement
   let isNearBottom = $state(true)
   let lastMessageCount = 0
+  let pendingImages = <string[]>([])
+  let fileInput: HTMLInputElement
+
+    function triggerFileSelect() {
+    fileInput?.click()
+  }
+
+  function handleFileSelect(e: Event) {
+    const input = e.target as HTMLInputElement
+    if (input.files && input.files[0]) {
+      const file = input.files[0]
+      if (!file.type.startsWith('image/')) return
+      
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        if (typeof e.target?.result === 'string') {
+          pendingImages = [...pendingImages, e.target.result]
+        }
+      }
+      reader.readAsDataURL(file)
+      input.value = ''
+    }
+  }
+
+  function removeImage(index: number) {
+    pendingImages = pendingImages.filter((_, i) => i !== index)
+  }
+
 
   function handleSend() {
-    if (!inputContent.trim()) return
-    onsend?.(inputContent.trim())
+    if (!inputContent.trim() && pendingImages.length === 0) return
+    onsend?.(inputContent.trim(), pendingImages)
+    pendingImages = []
     inputContent = ''
     // User sent a message, force scroll to bottom
     isNearBottom = true
@@ -54,6 +83,14 @@
     // Consider "near bottom" if within 50px of the bottom
     isNearBottom = scrollHeight - scrollTop - clientHeight <= 50
   }
+
+  $effect(() => {
+    // Auto-resize textarea
+    if (textarea && inputContent !== undefined) {
+      textarea.style.height = 'auto'
+      textarea.style.height = textarea.scrollHeight + 'px'
+    }
+  })
 
   $effect(() => {
     const count = messages.length
@@ -88,7 +125,11 @@
       </div>
     {:else}
       {#each messages as message}
-        <div class="message" class:user={message.role === 'user'} class:assistant={message.role === 'assistant'}>
+        <div
+          class="message"
+          class:user={message.role === 'user'}
+          class:assistant={message.role === 'assistant'}
+        >
           <div class="message-header">
             <span class="role-label">{message.role === 'user' ? '我' : 'AI'}</span>
           </div>
@@ -97,7 +138,7 @@
             {#if message.role === 'assistant' && isLoading && message === messages[messages.length - 1]}
               <span class="cursor"></span>
             {/if}
-            
+
             {#if message.guidance && message.guidance.options && message.guidance.options.length > 0}
               <div class="guidance-container">
                 {#if message.guidance.text}
@@ -127,20 +168,32 @@
 
   <div class="input-area">
     {#if isLoading}
-      <button class="stop-button" onclick={onstop}>
-        ■ Stop Generating
-      </button>
+      <button class="stop-button" onclick={onstop}> ■ Stop Generating </button>
     {/if}
-    <textarea
-      bind:this={textarea}
-      bind:value={inputContent}
-      onkeydown={handleKeyDown}
-      placeholder="输入消息... (Enter 发送, Shift+Enter 换行)"
-      rows="3"
-    ></textarea>
-    <button class="send-button" onclick={handleSend} disabled={!inputContent.trim()}>
-      发送
-    </button>
+    {#if pendingImages.length > 0}
+      <div class="image-preview-area">
+        {#each pendingImages as img, i}
+          <div class="preview-item">
+            <img src={img} alt="preview" />
+            <button class="remove-btn" onclick={() => removeImage(i)}>×</button>
+          </div>
+        {/each}
+      </div>
+    {/if}
+    <div class="input-wrapper">
+      <button class="attach-button" onclick={triggerFileSelect} title="Attach Image"> 📷 </button>
+   <input type="file" bind:this={fileInput} onchange={handleFileSelect} accept="image/*" style="display: none;" />
+      <textarea
+        bind:this={textarea}
+        bind:value={inputContent}
+        onkeydown={handleKeyDown}
+        placeholder="输入消息... (Enter 发送, Shift+Enter 换行)"
+        rows="1"
+      ></textarea>
+      <button class="send-button" onclick={handleSend} disabled={!inputContent.trim() && pendingImages.length === 0}>
+        发送
+      </button>
+    </div>
   </div>
 </div>
 
@@ -172,7 +225,7 @@
     font-size: 0.875rem;
     margin-top: 0.5rem;
   }
-  
+
   .cursor {
     display: inline-block;
     width: 6px;
@@ -182,10 +235,15 @@
     animation: blink 1s step-end infinite;
     vertical-align: middle;
   }
-  
+
   @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
   }
 
   .thinking .message-content {
@@ -199,12 +257,22 @@
     font-weight: bold;
     font-size: 1.2rem;
   }
-  .dot:nth-child(2) { animation-delay: 0.2s; }
-  .dot:nth-child(3) { animation-delay: 0.4s; }
+  .dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  .dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
 
   @keyframes wave {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-5px); }
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+    }
+    30% {
+      transform: translateY(-5px);
+    }
   }
 
   .message {
@@ -248,7 +316,7 @@
   }
 
   .message-content :global(pre) {
-    background: rgba(0,0,0,0.1);
+    background: rgba(0, 0, 0, 0.1);
     padding: 0.75rem;
     border-radius: 4px;
     overflow-x: auto;
@@ -256,7 +324,7 @@
   }
 
   .message.assistant .message-content :global(pre) {
-    background: rgba(0,0,0,0.05);
+    background: rgba(0, 0, 0, 0.05);
   }
 
   .message-content :global(code) {
@@ -266,11 +334,75 @@
 
   .input-area {
     position: relative;
-    display: flex;
-    gap: 0.5rem;
     padding: 1rem;
     border-top: 1px solid var(--ev-c-gray-3, #e8e8e8);
     background: var(--color-background-soft, #fafafa);
+  }
+
+  .image-preview-area {
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: var(--color-background-soft);
+    border-top: 1px solid var(--color-border);
+  }
+  .preview-item {
+    position: relative;
+    width: 60px;
+    height: 60px;
+  }
+  .preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  .remove-btn {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: red;
+    color: white;
+    border: none;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .input-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    background: var(--color-background-input);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 4px 8px;
+  }
+
+  .attach-button {
+    background: transparent;
+    border: none;
+    font-size: 1.2rem;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--ev-c-text-3);
+  }
+
+  .input-area textarea {
+    flex: 1;
+    padding: 8px;
+    background: transparent;
+    color: var(--color-text);
+    border: none;
+    resize: none;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    outline: none;
+    max-height: 200px;
   }
 
   .stop-button {
@@ -283,14 +415,17 @@
     padding: 6px 16px;
     border-radius: 20px;
     font-size: 0.8rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     color: var(--ev-c-text-2);
     display: flex;
     align-items: center;
     gap: 6px;
   }
-  .stop-button:hover { background: var(--color-background-soft); color: #ef4444; }
+  .stop-button:hover {
+    background: var(--color-background-soft);
+    color: #ef4444;
+  }
 
   .input-area textarea {
     flex: 1;
@@ -310,7 +445,7 @@
   }
 
   .send-button {
-    padding: 0.5rem 1.25rem;
+    padding: 6px 16px;
     background: var(--ev-c-primary, #4a90d9);
     color: white;
     border: none;
@@ -318,6 +453,8 @@
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s;
+    align-self: flex-end;
+    margin-bottom: 4px;
   }
 
   .send-button:hover:not(:disabled) {

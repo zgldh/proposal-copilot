@@ -34,7 +34,7 @@ function createChatStore() {
   return {
     subscribe,
 
-    addMessage(role: ChatMessage['role'], content: string) {
+    addMessage(role: ChatMessage['role'], content: any) {
       update(state => ({
         ...state,
         messages: [...state.messages, { role, content, timestamp: Date.now() }]
@@ -45,7 +45,7 @@ function createChatStore() {
       update(state => ({ ...state, isLoading: loading }))
     },
 
-    addUserMessage(content: string) {
+    addUserMessage(content: any) {
       this.addMessage('user', content)
     },
 
@@ -80,6 +80,10 @@ function createChatStore() {
         }
         return { ...state, messages }
       })
+    },
+
+    loadHistory(messages: ChatMessage[]) {
+      set({ messages, isLoading: false })
     },
 
     clear() {

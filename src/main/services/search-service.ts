@@ -1,7 +1,7 @@
 import type { SearchResult } from './ai-types'
 
 export interface SearchConfig {
-  provider: 'mock' | 'tavily'
+  provider: 'mock' | 'tavily' | 'metaso'
   apiKey?: string
 }
 
@@ -12,6 +12,7 @@ export class SearchService {
       return this.searchTavily(query, config.apiKey)
     }
     // Default / Mock
+    if (config.provider === 'metaso') return this.searchMetaso(query, config.apiKey || '')
     return this.searchMock(query)
   }
 
@@ -40,9 +41,27 @@ export class SearchService {
         body: JSON.stringify({ api_key: apiKey, query, max_results: 3 })
       })
       const data = (await response.json()) as any
-      return (data.results || []).map((r: any) => ({ title: r.title, content: r.content, url: r.url }))
+      return (data.results || []).map((r: any) => ({
+        title: r.title,
+        content: r.content,
+        url: r.url
+      }))
     } catch (e) {
       console.error('Search API Error:', e)
+      return []
+    }
+  }
+
+  private async searchMetaso(query: string, apiKey: string): Promise<SearchResult[]> {
+    // MetaSo Implementation
+    // Using a proxy or direct API if available. Assuming standard format for now.
+    try {
+      // Note: MetaSo official API might need specific implementation details.
+      // For now, we simulate or use a placeholder if no direct API is known.
+      console.log('[SearchService] MetaSo search for:', query)
+      // Placeholder for actual API call
+      return this.searchMock(query + ' (MetaSo)')
+    } catch (e) {
       return []
     }
   }

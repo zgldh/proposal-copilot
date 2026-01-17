@@ -1,11 +1,9 @@
 import type { Project } from './project-service'
 
 export class MigrationService {
-  private readonly CURRENT_SCHEMA_VERSION = '1.0.0'
-
   migrate(data: any): Project {
     const project = { ...data }
-    
+
     // Initial migration: Ensure schema_version exists
     if (!project.meta.schema_version) {
       project.meta.schema_version = '1.0.0'

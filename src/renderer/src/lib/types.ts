@@ -37,6 +37,6 @@ export interface Settings {
   theme: 'light' | 'dark'
   active_provider_id: string
   providers: Record<string, ProviderConfig>
-  search_provider: 'mock' | 'tavily'
+  search_provider: 'mock' | 'tavily' | 'metaso'
   search_api_key: string
 }

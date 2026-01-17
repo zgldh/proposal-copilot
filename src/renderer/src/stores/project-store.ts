@@ -1,6 +1,8 @@
 import { writable, get } from 'svelte/store'
 import type { Project, TreeNode } from '$lib/types'
 import { toast } from './toast-store'
+import { treeStore } from './tree-store'
+import { chatStore } from './chat-store'
 
 interface ProjectState {
   currentProject: Project | null
@@ -23,6 +25,7 @@ const initialState: ProjectState = {
 
 function createProjectStore() {
   const { subscribe, set, update } = writable<ProjectState>(initialState)
+  let saveTimeout: any = null
 
   function generateId(): string {
     return crypto.randomUUID()
@@ -39,18 +42,19 @@ function createProjectStore() {
     }
   }
 
-  return {
+  const store = {
     subscribe,
 
     loadProject: async (path: string) => {
       update((state) => ({ ...state, isLoading: true }))
       try {
-        const project = await window.electron.project.read(path)
+        const project = (await window.electron.project.read(path)) as Project
         set({
           currentProject: project,
           projectPath: path,
           isDirty: false
         })
+        chatStore.loadHistory(project.chat_history || [])
       } catch (error) {
         console.error('Failed to load project:', error)
         throw error
@@ -65,6 +69,7 @@ function createProjectStore() {
           version: '1.0.0'
         },
         context: '',
+        chat_history: [],
         structure_tree: [
           createTreeNode('subsystem', 'Main System'),
           createTreeNode('subsystem', 'Communication'),
@@ -89,6 +94,7 @@ function createProjectStore() {
           isDirty: true
         }
       })
+      store.triggerAutoSave()
     },
 
     updateMeta: (meta: Partial<Project['meta']>) => {
@@ -104,6 +110,19 @@ function createProjectStore() {
           isDirty: true
         }
       })
+      store.triggerAutoSave()
+    },
+
+    updateChatHistory: (history: any[]) => {
+      update((state) => {
+        if (!state.currentProject) return state
+        return {
+          ...state,
+          currentProject: { ...state.currentProject, chat_history: history },
+          isDirty: true
+        }
+      })
+      store.triggerAutoSave()
     },
 
     updateContext: (context: string) => {
@@ -116,6 +135,7 @@ function createProjectStore() {
           isDirty: true
         }
       })
+      store.triggerAutoSave()
     },
 
     addTreeNode: (parentId: string | null, type: TreeNode['type'], name: string) => {
@@ -156,6 +176,7 @@ function createProjectStore() {
           isDirty: true
         }
       })
+      store.triggerAutoSave()
     },
 
     updateTreeNode: (nodeId: string, updates: Partial<TreeNode>) => {
@@ -183,8 +204,8 @@ function createProjectStore() {
           isDirty: true
         }
       })
+      store.triggerAutoSave()
     },
-
     removeTreeNode: (nodeId: string) => {
       update((state) => {
         if (!state.currentProject) return state
@@ -194,30 +215,34 @@ function createProjectStore() {
             .filter((node) => node.id !== nodeId)
             .map((node) => ({
               ...node,
-              children: node.children.length > 0 ? findAndRemove(node.children) : []
+              children: findAndRemove(node.children)
             }))
         }
+
+        const newTree = findAndRemove(state.currentProject.structure_tree)
+        
+        treeStore.selectNode(null)
+        treeStore.setEditing(null)
 
         return {
           ...state,
           currentProject: {
             ...state.currentProject,
-            structure_tree: findAndRemove(state.currentProject.structure_tree)
+            structure_tree: newTree
           },
           isDirty: true
         }
       })
+      store.triggerAutoSave()
     },
 
     moveTreeNode: (sourceId: string, targetId: string, position: 'before' | 'after' | 'inside') => {
       update((state) => {
         if (!state.currentProject) return state
 
-        // Deep clone tree to manipulate
         const tree = JSON.parse(JSON.stringify(state.currentProject.structure_tree)) as TreeNode[]
         let sourceNode: TreeNode | null = null
 
-        // 1. Remove source node
         function removeNode(nodes: TreeNode[]): TreeNode[] {
           const result: TreeNode[] = []
           for (const node of nodes) {
@@ -236,7 +261,6 @@ function createProjectStore() {
         const treeWithoutSource = removeNode(tree)
         if (!sourceNode) return state
 
-        // 2. Insert at target
         let inserted = false
         function insertNode(nodes: TreeNode[]): TreeNode[] {
           const result: TreeNode[] = []
@@ -250,7 +274,6 @@ function createProjectStore() {
               }
               inserted = true
             } else {
-              // Recursively process children
               const newChildren = insertNode(node.children)
               node.children = newChildren
               result.push(node)
@@ -260,8 +283,7 @@ function createProjectStore() {
         }
 
         const finalTree = insertNode(treeWithoutSource)
-
-        if (!inserted) return state // Target not found (e.g. dropped inside self)
+        if (!inserted) return state
 
         return {
           ...state,
@@ -269,14 +291,15 @@ function createProjectStore() {
           isDirty: true
         }
       })
+      store.triggerAutoSave()
     },
 
     async save() {
       const state = get({ subscribe })
       if (!state.currentProject || !state.projectPath) return
-      
+
       try {
-        await window.electronAPI.projectSave(state.projectPath, state.currentProject)
+        await window.electron.project.save(state.projectPath, state.currentProject)
         update((s) => ({ ...s, isDirty: false }))
       } catch (error) {
         console.error('Save failed:', error)
@@ -284,15 +307,25 @@ function createProjectStore() {
       }
     },
 
+    triggerAutoSave() {
+      if (saveTimeout) clearTimeout(saveTimeout)
+      saveTimeout = setTimeout(() => {
+        store.save()
+      }, 2000)
+    },
+
     applyOperations: (operations: TreeOperation[]) => {
       update((state) => {
         if (!state.currentProject) return state
-        
-        let newTree = [...state.currentProject.structure_tree]
-        
-        // Helper to add node recursively
-        const addRecursive = (nodes: TreeNode[], parentId: string, newNode: TreeNode): TreeNode[] => {
-          return nodes.map(node => {
+
+        let newTree = JSON.parse(JSON.stringify(state.currentProject.structure_tree)) as TreeNode[]
+
+        const addRecursive = (
+          nodes: TreeNode[],
+          parentId: string,
+          newNode: TreeNode
+        ): TreeNode[] => {
+          return nodes.map((node) => {
             if (node.id === parentId) {
               return { ...node, children: [...node.children, newNode] }
             }
@@ -303,13 +336,10 @@ function createProjectStore() {
           })
         }
 
-        // Helper to find parent by ID or return root if null
-        // Note: update() wrapper handles the immutable state return
-        
         for (const op of operations) {
           if (op.type === 'add' && op.nodeData) {
             const newNode: TreeNode = {
-              id: op.nodeData.id || generateId(), // Use ID from inference if available (for batch linking)
+              id: op.nodeData.id || generateId(),
               type: op.nodeData.type || 'device',
               name: op.nodeData.name || 'New Item',
               quantity: op.nodeData.quantity || 1,
@@ -318,13 +348,11 @@ function createProjectStore() {
             }
 
             if (!op.targetParentId) {
-              // Add to root
               newTree.push(newNode)
             } else {
               newTree = addRecursive(newTree, op.targetParentId, newNode)
             }
           }
-          // TODO: Implement update/delete for AI operations here if needed
         }
 
         return {
@@ -336,15 +364,20 @@ function createProjectStore() {
           isDirty: true
         }
       })
+      store.triggerAutoSave()
     },
 
     undo: async () => {
       const state = get({ subscribe })
       if (!state.projectPath) return
       try {
-        const previousProject = await window.electronAPI.projectUndo(state.projectPath)
+        const previousProject = await window.electron.project.undo(state.projectPath)
         if (previousProject) {
-          set({ currentProject: previousProject as Project, projectPath: state.projectPath, isDirty: false })
+          set({
+            currentProject: previousProject as Project,
+            projectPath: state.projectPath,
+            isDirty: false
+          })
           toast.success('Undo successful')
         } else {
           toast.info('Nothing to undo')
@@ -355,9 +388,12 @@ function createProjectStore() {
     },
 
     clear: () => {
+      if (saveTimeout) clearTimeout(saveTimeout)
       set(initialState)
     }
   }
+
+  return store
 }
 
 export const projectStore = createProjectStore()

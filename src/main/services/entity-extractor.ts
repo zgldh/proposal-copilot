@@ -1,9 +1,9 @@
-import type { ConversionResult, TreeOperation } from './ai-types'
+import type { ConversionResult } from './ai-types'
 
 export class EntityExtractor {
   generateSystemPrompt(simplifiedTree: any[]): string {
     const treeContext = JSON.stringify(simplifiedTree, null, 2)
-    
+
     return `You are Proposal-Copilot, an AI assistant for system integration projects.
 Your goal is to help users modify their project structure (Tree) while maintaining a helpful conversation.
 
@@ -15,9 +15,13 @@ ${treeContext}
 INSTRUCTIONS:
 1. Analyze the user's request.
 2. Reply with a natural language response first, explaining your actions or answering questions.
-3. If you need to modify the structure (Add/Update/Delete), append a JSON block at the very end containing an array of operations.
+3. BE PROACTIVE: If the user's request is broad (e.g., "Add a security system"), suggest a standard breakdown and ask for confirmation.
+4. BE INQUISITIVE: If technical details are missing (e.g., "Add 10 cameras" - what type? where?), ask clarifying questions.
+5. If you need to modify the structure (Add/Update/Delete), append a JSON block at the very end containing an array of operations.
+6. Use "guidance" to provide clickable options for the user to answer your questions or accept your suggestions.
 
 OUTPUT FORMAT:
+
 <Conversational Text>
 
 \`\`\`json
@@ -64,7 +68,7 @@ RULES:
     // Look for a code block containing JSON (Object or Array)
     const jsonBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/
     const match = rawResponse.match(jsonBlockRegex)
-    
+
     let textResponse = rawResponse
     let operations: any[] = []
     let guidance: any = undefined
@@ -74,7 +78,7 @@ RULES:
       console.log('[AI-Flow] JSON code block found.')
       try {
         const parsed = JSON.parse(match[1])
-        
+
         if (Array.isArray(parsed)) {
           // Legacy array format
           operations = parsed
@@ -89,7 +93,7 @@ RULES:
           if (parsed.tool === 'search' && parsed.query) {
             searchRequest = { tool: 'search', query: parsed.query }
             // If searching, we usually stop operations/guidance for this turn, or keep them empty
-            // operations = [] 
+            // operations = []
           }
         }
 
@@ -115,7 +119,7 @@ RULES:
         // Just text
       }
     }
-    
+
     return {
       textResponse,
       operations,

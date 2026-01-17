@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { join, dirname } from 'path'
 import { ProjectValidator } from './project-validator'
 import { MigrationService } from './migration-service'
 import { CheckpointManager } from './checkpoint-manager'
@@ -22,6 +22,7 @@ export interface Project {
     schema_version: string
   }
   context: string
+  chat_history?: any[]
   structure_tree: TreeNode[]
 }
 
@@ -43,7 +44,7 @@ export class ProjectService {
     }
 
     const rawData = JSON.parse(readFileSync(filePath, 'utf-8'))
-    
+
     // Migrate
     const migratedData = this.migration.migrate(rawData)
 
@@ -68,10 +69,14 @@ export class ProjectService {
 
     data.meta.last_modified = new Date().toISOString()
     writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8')
+
+    // Milestone 2: Also write structure to a separate file for visibility
+    const structurePath = join(dirname(filePath), 'structure.json')
+    writeFileSync(structurePath, JSON.stringify(data.structure_tree, null, 2), 'utf-8')
   }
 
-  async createSnapshot(path: string, description: string): Promise<string> {
-    const project = await this.loadProject(path)
+  async createSnapshot(path: string, description: string, data?: Project): Promise<string> {
+    const project = data || (await this.loadProject(path))
     return this.checkpoints.createCheckpoint(path, project, description)
   }
 

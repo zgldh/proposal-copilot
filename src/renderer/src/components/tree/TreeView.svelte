@@ -7,7 +7,7 @@
 
   let project = $derived($projectStore.currentProject)
   let searchTerm = $state('')
-  
+
   // Context Menu State
   let menuVisible = $state(false)
   let menuX = $state(0)
@@ -16,13 +16,31 @@
 
   function handleContextMenu(e: MouseEvent, nodeId: string | null) {
     e.preventDefault()
-    menuX = e.clientX
-    menuY = e.clientY
+
+    // Position adjustments for viewport clipping
+    const menuWidth = 160 // min-width from CSS
+    const menuHeight = 200 // estimated max height
+
+    let x = e.clientX
+    let y = e.clientY
+
+    if (x + menuWidth > window.innerWidth) {
+      x = window.innerWidth - menuWidth - 10
+    }
+
+    if (y + menuHeight > window.innerHeight) {
+      y = window.innerHeight - menuHeight - 10
+    }
+
+    menuX = x
+    menuY = y
     menuNodeId = nodeId
     menuVisible = true
   }
 
-  function handleMenuAction(action: 'add-subsystem' | 'add-device' | 'add-feature' | 'rename' | 'delete') {
+  function handleMenuAction(
+    action: 'add-subsystem' | 'add-device' | 'add-feature' | 'rename' | 'delete'
+  ) {
     if (!project) return
 
     if (action === 'delete' && menuNodeId) {
@@ -30,10 +48,7 @@
         projectStore.removeTreeNode(menuNodeId)
       }
     } else if (action === 'rename' && menuNodeId) {
-      // Trigger rename mode on node - handling via double click is default, 
-      // but we could dispatch a specific event or rely on double click for now.
-      // For MVP, rename via double-click is implemented.
-      alert('Please double-click the node to rename it.')
+      treeStore.setEditing(menuNodeId)
     } else if (action.startsWith('add-')) {
       const type = action.replace('add-', '') as 'subsystem' | 'device' | 'feature'
       const name = `New ${type.charAt(0).toUpperCase() + type.slice(1)}`
@@ -57,34 +72,33 @@
   }
 
   function handleDragOver(e: DragEvent) {
-    e.preventDefault() // Necessary to allow dropping
+    e.preventDefault()
   }
 
   function filterNodes(nodes: TreeNodeType[], term: string): TreeNodeType[] {
     if (!term.trim()) return nodes
-    
+
     return nodes.reduce<TreeNodeType[]>((acc, node) => {
       const matchesSelf = node.name.toLowerCase().includes(term.toLowerCase())
       const filteredChildren = filterNodes(node.children, term)
-      
+
       if (matchesSelf || filteredChildren.length > 0) {
         acc.push({
-            ...node,
-            children: filteredChildren
+          ...node,
+          children: filteredChildren
         })
       }
       return acc
     }, [])
   }
-  
+
   function handleSearch(e: Event) {
     const term = (e.target as HTMLInputElement).value
     searchTerm = term
-    
+
     if (term.trim() && project) {
-      // Collect IDs to expand
       const idsToExpand = new Set<string>()
-      
+
       const check = (nodes: TreeNodeType[]) => {
         let childMatch = false
         for (const node of nodes) {
@@ -99,29 +113,43 @@
         }
         return childMatch
       }
-      
+
       check(project.structure_tree)
-      idsToExpand.forEach(id => treeStore.setExpanded(id, true))
+      idsToExpand.forEach((id) => treeStore.setExpanded(id, true))
     }
   }
 
   let filteredTree = $derived(project ? filterNodes(project.structure_tree, searchTerm) : [])
+
+  function handleExpandAll() {
+    if (project) treeStore.expandAll(project.structure_tree)
+  }
+
+  function handleCollapseAll() {
+    treeStore.collapseAll()
+  }
 </script>
 
 <div class="tree-view-container">
   <div class="toolbar">
-    <button class="add-root" onclick={(e) => handleContextMenu(e, null)} title="Add Root Node">
-      <span>+</span>
-    </button>
-    <input 
-      type="text" 
-      placeholder="Search..." 
-      value={searchTerm}
-      oninput={handleSearch}
-    />
+    <input type="text" placeholder="Search..." value={searchTerm} oninput={handleSearch} />
+    <div class="actions">
+      <button class="icon-btn" onclick={(e) => handleContextMenu(e, null)} title="Add Root Node">
+        <span>+</span>
+      </button>
+      <button class="icon-btn" onclick={handleExpandAll} title="Expand All">
+        <span>📂</span>
+      </button>
+      <button class="icon-btn" onclick={handleCollapseAll} title="Collapse All">
+        <span>📁</span>
+      </button>
+      <button class="icon-btn" onclick={() => projectStore.undo()} title="Undo (Rollback)">
+        <span>↩️</span>
+      </button>
+    </div>
   </div>
 
-  <div 
+  <div
     class="tree-content"
     oncontextmenu={(e) => handleContextMenu(e, null)}
     ondrop={handleDrop}
@@ -130,23 +158,32 @@
   >
     {#if project}
       {#each filteredTree as node (node.id)}
-        <TreeNode 
-          {node} 
-          oncontextmenu={handleContextMenu}
-          onrename={handleRename}
-        />
+        <TreeNode {node} oncontextmenu={handleContextMenu} onrename={handleRename} {searchTerm} />
       {/each}
+
+      {#if filteredTree.length === 0 && project.structure_tree.length > 0}
+        <div class="empty">No matches found</div>
+      {/if}
+
+      {#if project.structure_tree.length === 0}
+        <div class="empty">
+          <p>Tree is empty</p>
+          <button class="add-btn" onclick={(e) => handleContextMenu(e, null)}>
+            + Add First Node
+          </button>
+        </div>
+      {/if}
     {:else}
       <div class="empty">No project loaded</div>
     {/if}
   </div>
 
-  <TreeContextMenu 
-    x={menuX} 
-    y={menuY} 
-    visible={menuVisible} 
+  <TreeContextMenu
+    x={menuX}
+    y={menuY}
+    visible={menuVisible}
     nodeId={menuNodeId}
-    onclose={() => menuVisible = false}
+    onclose={() => (menuVisible = false)}
     onaction={handleMenuAction}
   />
 </div>
@@ -161,36 +198,88 @@
   }
 
   .toolbar {
-    padding: 8px;
+    padding: 6px 8px;
     display: flex;
+    align-items: center;
     gap: 8px;
     border-bottom: 1px solid var(--color-border);
+    background: var(--color-background-soft);
   }
-  .toolbar input { 
-    flex: 1; 
-    padding: 6px 10px; 
-    border-radius: 6px; 
-    border: 1px solid var(--color-border); 
-    background: var(--color-background-input); 
-    color: var(--color-text); 
-    font-size: 0.875rem;
+
+  .toolbar input {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-background-input);
+    color: var(--color-text);
+    font-size: 0.8125rem;
+    transition: all 0.2s ease;
   }
-  .add-root { 
+
+  .toolbar input:focus {
+    outline: none;
+    border-color: var(--ev-c-primary);
+    box-shadow: 0 0 0 2px rgba(81, 127, 164, 0.2);
+  }
+
+  .toolbar .actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .icon-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 30px; 
-    height: 30px;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: var(--color-background-soft);
-    color: var(--color-text);
-    cursor: pointer; 
-    font-size: 1.2rem;
+    width: 26px;
+    height: 26px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
     padding: 0;
+    transition: all 0.2s ease;
   }
-  .add-root:hover { background: var(--ev-c-gray-3); }
 
-  .tree-content { flex: 1; overflow-y: auto; padding-bottom: 20px; }
-  .empty { padding: 20px; text-align: center; color: var(--ev-c-text-3); }
+  .icon-btn:hover {
+    background: var(--color-background-mute);
+    color: var(--color-text);
+    border-color: var(--color-border);
+  }
+
+  .icon-btn span {
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tree-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
+  .empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--ev-c-text-3);
+  }
+
+  .add-btn {
+    margin-top: 12px;
+    padding: 6px 12px;
+    background: var(--ev-c-primary);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .add-btn:hover {
+    opacity: 0.9;
+  }
 </style>

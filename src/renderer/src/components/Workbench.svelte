@@ -91,11 +91,19 @@
   let stopStreaming: (() => void) | null = null
   let isCancelled = false
 
-  async function handleSendMessage(content: string) {
-    if (!content.trim()) return
+  async function handleSendMessage(content: string, images: string[] = []) {
+    if (!content.trim() && images.length === 0) return
 
     try {
-      chatStore.addUserMessage(content)
+      let messageContent: any = content
+      if (images.length > 0) {
+        messageContent = [
+          { type: 'text', text: content },
+          ...images.map((url) => ({ type: 'image_url', image_url: { url } }))
+        ]
+      }
+      chatStore.addUserMessage(messageContent)
+      projectStore.updateChatHistory(chatStore.getMessages())
       chatStore.setLoading(true)
       isCancelled = false
 
@@ -118,9 +126,9 @@
       }
 
       // Prepare context
-      const history = $chatStore.messages.map(m => ({ role: m.role, content: m.content }))
+      const history = $chatStore.messages.map((m) => ({ role: m.role, content: m.content }))
       const projectContext = $projectStore.currentProject?.structure_tree || []
-      
+
       // Get active provider config
       const settings = $settingsStore.settings
       const config = settings.providers[settings.active_provider_id]
@@ -131,13 +139,15 @@
         history,
         projectPath: $projectStore.projectPath!,
         projectContext,
-        config
+        config,
+        settings
       })
 
       if (isCancelled) return
 
       // Handle response
       chatStore.updateLastAssistantMessage(result.textResponse, result.guidance)
+      projectStore.updateChatHistory(chatStore.getMessages())
       projectStore.applyOperations(result.operations)
 
       cleanupListener()
@@ -183,23 +193,31 @@
           minRatio={0.3}
           maxRatio={0.7}
           defaultRatio={0.5}
-          storageKey={$projectStore.projectPath ? `split-ratio-${$projectStore.projectPath}` : undefined}
+          storageKey={$projectStore.projectPath
+            ? `split-ratio-${$projectStore.projectPath}`
+            : undefined}
         >
           {#snippet left()}
-            <ChatPanel 
-              messages={$chatStore.messages} 
+            <ChatPanel
+              messages={$chatStore.messages}
               isLoading={$chatStore.isLoading}
-              onsend={handleSendMessage} 
+              onsend={handleSendMessage}
               onstop={handleStop}
             />
           {/snippet}
           {#snippet right()}
             <div class="right-panel-container">
               <div class="right-panel-tabs">
-                <button class:active={rightPanelView === 'tree'} onclick={() => rightPanelView = 'tree'}>
+                <button
+                  class:active={rightPanelView === 'tree'}
+                  onclick={() => (rightPanelView = 'tree')}
+                >
                   Structure
                 </button>
-                <button class:active={rightPanelView === 'preview'} onclick={() => rightPanelView = 'preview'}>
+                <button
+                  class:active={rightPanelView === 'preview'}
+                  onclick={() => (rightPanelView = 'preview')}
+                >
                   Preview
                 </button>
               </div>
@@ -222,7 +240,6 @@
     on:confirm={handleNewProject}
     on:cancel={closeNewProjectDialog}
   />
-
 </div>
 
 <style>

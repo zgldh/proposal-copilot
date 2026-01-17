@@ -17,7 +17,7 @@ interface Settings {
   theme: 'light' | 'dark'
   active_provider_id: string
   providers: Record<string, ProviderConfig>
-  search_provider: 'mock' | 'tavily'
+  search_provider: 'mock' | 'tavily' | 'metaso'
   search_api_key: string
 }
 
@@ -90,6 +90,7 @@ declare global {
         processMessage: (params: {
           message: string
           history: ChatMessage[]
+          projectPath: string
           projectContext: TreeNode[]
           config: ProviderConfig
           settings: Settings
@@ -133,8 +134,7 @@ if (process.contextIsolated) {
       settingsWrite: (settings: Settings) =>
         ipcRenderer.invoke('settings:write', settings) as Promise<boolean>,
       ai: {
-        testConnection: (config: ProviderConfig) =>
-          ipcRenderer.invoke('ai:testConnection', config),
+        testConnection: (config: ProviderConfig) => ipcRenderer.invoke('ai:testConnection', config),
         chat: (messages: ChatMessage[], config: ProviderConfig) =>
           ipcRenderer.invoke('ai:chat', messages, config),
         streamChat: (messages: ChatMessage[], config: ProviderConfig) =>
@@ -157,8 +157,7 @@ if (process.contextIsolated) {
         ollama: {
           getModels: (baseUrl: string) => ipcRenderer.invoke('ai:ollama:getModels', baseUrl)
         },
-        processMessage: (params) =>
-          ipcRenderer.invoke('ai:process-message', params)
+        processMessage: (params) => ipcRenderer.invoke('ai:process-message', params)
       }
     })
 
@@ -197,8 +196,7 @@ if (process.contextIsolated) {
     settingsWrite: (settings: Settings) =>
       ipcRenderer.invoke('settings:write', settings) as Promise<boolean>,
     ai: {
-      testConnection: (config: ProviderConfig) =>
-        ipcRenderer.invoke('ai:testConnection', config),
+      testConnection: (config: ProviderConfig) => ipcRenderer.invoke('ai:testConnection', config),
       chat: (messages: ChatMessage[], config: ProviderConfig) =>
         ipcRenderer.invoke('ai:chat', messages, config),
       streamChat: (messages: ChatMessage[], config: ProviderConfig) =>
@@ -221,8 +219,7 @@ if (process.contextIsolated) {
       ollama: {
         getModels: (baseUrl: string) => ipcRenderer.invoke('ai:ollama:getModels', baseUrl)
       },
-      processMessage: (params) =>
-        ipcRenderer.invoke('ai:process-message', params)
+      processMessage: (params) => ipcRenderer.invoke('ai:process-message', params)
     }
   }
 }

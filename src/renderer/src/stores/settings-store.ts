@@ -26,7 +26,9 @@ const DEFAULT_SETTINGS: Settings = {
       base_url: 'http://localhost:11434',
       model: ''
     }
-  }
+  },
+  search_provider: 'mock',
+  search_api_key: ''
 }
 
 interface SettingsState {
@@ -83,6 +85,13 @@ function createSettingsStore() {
       }))
       const state = get({ subscribe })
       await window.electron.settings.write(state.settings)
+    },
+
+    updateSearchConfig(provider: 'mock' | 'tavily', apiKey: string) {
+      update((state) => ({
+        ...state,
+        settings: { ...state.settings, search_provider: provider, search_api_key: apiKey }
+      }))
     }
   }
 }

@@ -30,10 +30,21 @@
   let ollamaModels: string[] = $state([])
   let isLoadingModels = $state(false)
 
+  // Search state
+  let searchForm = $state({
+    provider: settings.search_provider || 'mock',
+    apiKey: settings.search_api_key || ''
+  })
+
   $effect(() => {
     // Sync form when selection changes or store loads
     if (settings.providers[selectedProviderId]) {
       formConfig = { ...settings.providers[selectedProviderId] }
+    } else if (selectedProviderId === 'search') {
+      searchForm = {
+        provider: settings.search_provider || 'mock',
+        apiKey: settings.search_api_key || ''
+      }
     } else if (providers.length > 0) {
       selectedProviderId = providers[0].id
     }
@@ -41,10 +52,12 @@
 
   async function fetchOllamaModels() {
     if (formConfig.id !== 'ollama') return
-    
+
     isLoadingModels = true
     try {
-      const models = await window.electronAPI.ai.ollama.getModels(formConfig.base_url || 'http://localhost:11434')
+      const models = await window.electronAPI.ai.ollama.getModels(
+        formConfig.base_url || 'http://localhost:11434'
+      )
       ollamaModels = models
       if (models.length > 0 && !formConfig.model) {
         formConfig.model = models[0]
@@ -71,6 +84,12 @@
     settingsStore.setActiveProvider(selectedProviderId)
     await settingsStore.save()
     toast.success('Settings saved successfully')
+  }
+
+  async function saveSearchSettings() {
+    settingsStore.updateSearchConfig(searchForm.provider as any, searchForm.apiKey)
+    await settingsStore.save()
+    toast.success('Search settings saved')
   }
 
   async function testConnection() {
@@ -122,58 +141,101 @@
           {provider.name}
         </button>
       {/each}
+
+      <button
+        class="provider-item"
+        class:active={selectedProviderId === 'search'}
+        onclick={() => selectProvider('search')}
+      >
+        <span class="status-dot search"></span>
+        Search Engine
+      </button>
     </div>
   </div>
 
   <div class="content">
-    <h2 class="content-title">Configure {formConfig.name}</h2>
-
-    <div class="form-group">
-      <label for="model">Model Name</label>
-      {#if formConfig.id === 'ollama'}
-        <div class="model-select-row">
-          <select id="model" bind:value={formConfig.model} disabled={isLoadingModels}>
-            {#if ollamaModels.length === 0}
-               <option value="" disabled>No models found (Check connection)</option>
-            {/if}
-            {#each ollamaModels as model}
-              <option value={model}>{model}</option>
-            {/each}
-            <option value={formConfig.model} hidden>{formConfig.model}</option>
-          </select>
-          <button class="icon-button" onclick={fetchOllamaModels} title="Refresh Models">↻</button>
-        </div>
-      {:else}
-        <input id="model" type="text" bind:value={formConfig.model} />
-        <p class="hint">e.g. gpt-4, deepseek-chat, llama2</p>
-      {/if}
-    </div>
-
-    <div class="form-group">
-      <label for="api-key">API Key</label>
-      <div class="api-key-row">
-        <input id="api-key" type="password" bind:value={formConfig.api_key} />
-        <button class="test-button" onclick={testConnection} disabled={isTesting}>
-          {#if isTesting}
-            <div class="spinner"></div>
-          {:else}
-            Test
-          {/if}
-        </button>
+    {#if selectedProviderId === 'search'}
+      <h2 class="content-title">Search Configuration</h2>
+      <div class="form-group">
+        <label for="search-provider">Search Provider</label>
+        <select id="search-provider" bind:value={searchForm.provider}>
+          <option value="mock">Mock (Development)</option>
+          <option value="tavily">Tavily (Web Search)</option>
+          <option value="metaso">MetaSo (AI Search)</option>
+        </select>
       </div>
-    </div>
 
-    <div class="form-group">
-      <label for="base-url">Base URL</label>
-      <input id="base-url" type="text" bind:value={formConfig.base_url} placeholder="Optional" />
-      <p class="hint">
-        Default: {providers.find((p) => p.id === selectedProviderId)?.base_url || 'N/A'}
-      </p>
-    </div>
+      {#if searchForm.provider === 'tavily' || searchForm.provider === 'metaso'}
+        <div class="form-group">
+          <label for="search-api-key"
+            >{searchForm.provider === 'metaso' ? 'MetaSo' : 'Tavily'} API Key</label
+          >
+          <input id="search-api-key" type="password" bind:value={searchForm.apiKey} />
+          <p class="hint">
+            Get your key from
+            {#if searchForm.provider === 'metaso'}
+              <a href="https://metaso.cn/search-api/api-keys" target="_blank">metaso.cn</a>
+            {:else}
+              <a href="https://tavily.com" target="_blank">tavily.com</a>
+            {/if}
+          </p>
+        </div>
+      {/if}
 
-    <div class="actions">
-      <button class="save-button" onclick={saveSettings}>Save & Activate</button>
-    </div>
+      <div class="actions">
+        <button class="save-button" onclick={saveSearchSettings}>Save Search Settings</button>
+      </div>
+    {:else}
+      <h2 class="content-title">Configure {formConfig.name}</h2>
+
+      <div class="form-group">
+        <label for="model">Model Name</label>
+        {#if formConfig.id === 'ollama'}
+          <div class="model-select-row">
+            <select id="model" bind:value={formConfig.model} disabled={isLoadingModels}>
+              {#if ollamaModels.length === 0}
+                <option value="" disabled>No models found (Check connection)</option>
+              {/if}
+              {#each ollamaModels as model}
+                <option value={model}>{model}</option>
+              {/each}
+              <option value={formConfig.model} hidden>{formConfig.model}</option>
+            </select>
+            <button class="icon-button" onclick={fetchOllamaModels} title="Refresh Models">↻</button
+            >
+          </div>
+        {:else}
+          <input id="model" type="text" bind:value={formConfig.model} />
+          <p class="hint">e.g. gpt-4, deepseek-chat, llama2</p>
+        {/if}
+      </div>
+
+      <div class="form-group">
+        <label for="api-key">API Key</label>
+        <div class="api-key-row">
+          <input id="api-key" type="password" bind:value={formConfig.api_key} />
+          <button class="test-button" onclick={testConnection} disabled={isTesting}>
+            {#if isTesting}
+              <div class="spinner"></div>
+            {:else}
+              Test
+            {/if}
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="base-url">Base URL</label>
+        <input id="base-url" type="text" bind:value={formConfig.base_url} placeholder="Optional" />
+        <p class="hint">
+          Default: {providers.find((p) => p.id === selectedProviderId)?.base_url || 'N/A'}
+        </p>
+      </div>
+
+      <div class="actions">
+        <button class="save-button" onclick={saveSettings}>Save & Activate</button>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -272,6 +334,10 @@
     background: var(--ev-c-gray-2);
   }
 
+  .status-dot.search {
+    background: #4a90d9;
+  }
+
   .provider-item.current .status-dot {
     background: #4cc71e;
     box-shadow: 0 0 4px #4cc71e;
@@ -345,7 +411,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .hint {

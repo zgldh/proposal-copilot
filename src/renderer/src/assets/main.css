@@ -93,7 +93,6 @@ code {
 
 .actions {
   display: flex;
-  padding-top: 32px;
   margin: -6px;
   flex-wrap: wrap;
   justify-content: flex-start;
