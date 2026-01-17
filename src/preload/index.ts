@@ -10,7 +10,7 @@ interface ProviderConfig {
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
-  content: string
+  content: string | any
 }
 
 interface Settings {
@@ -74,6 +74,8 @@ declare global {
       projectRead: (path: string) => Promise<Record<string, unknown>>
       projectSave: (path: string, data: any) => Promise<boolean>
       projectUndo: (path: string) => Promise<Record<string, unknown> | null>
+      projectExportExcel: (project: any) => Promise<string | null>
+      projectExportWord: (project: any) => Promise<string | null>
       settingsRead: () => Promise<Settings>
       settingsWrite: (settings: Settings) => Promise<boolean>
       ai: {
@@ -107,6 +109,8 @@ declare global {
         read: (path: string) => Promise<Record<string, unknown>>
         save: (path: string, data: any) => Promise<boolean>
         undo: (path: string) => Promise<Record<string, unknown> | null>
+        exportExcel: (project: any) => Promise<string | null>
+        exportWord: (project: any) => Promise<string | null>
       }
       settings: {
         read: () => Promise<Settings>
@@ -130,6 +134,8 @@ if (process.contextIsolated) {
       projectRead: (path: string) => ipcRenderer.invoke('project:read', path),
       projectSave: (path: string, data: any) => ipcRenderer.invoke('project:save', path, data),
       projectUndo: (path: string) => ipcRenderer.invoke('project:undo', path),
+      projectExportExcel: (project: any) => ipcRenderer.invoke('project:export-excel', project),
+      projectExportWord: (project: any) => ipcRenderer.invoke('project:export-word', project),
       settingsRead: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
       settingsWrite: (settings: Settings) =>
         ipcRenderer.invoke('settings:write', settings) as Promise<boolean>,
@@ -170,7 +176,9 @@ if (process.contextIsolated) {
         create: (path: string, name: string) => ipcRenderer.invoke('project:create', path, name),
         read: (path: string) => ipcRenderer.invoke('project:read', path),
         save: (path: string, data: any) => ipcRenderer.invoke('project:save', path, data),
-        undo: (path: string) => ipcRenderer.invoke('project:undo', path)
+        undo: (path: string) => ipcRenderer.invoke('project:undo', path),
+        exportExcel: (project: any) => ipcRenderer.invoke('project:export-excel', project),
+        exportWord: (project: any) => ipcRenderer.invoke('project:export-word', project)
       },
       settings: {
         read: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
@@ -192,6 +200,8 @@ if (process.contextIsolated) {
     projectRead: (path: string) => ipcRenderer.invoke('project:read', path),
     projectSave: (path: string, data: any) => ipcRenderer.invoke('project:save', path, data),
     projectUndo: (path: string) => ipcRenderer.invoke('project:undo', path),
+    projectExportExcel: (project: any) => ipcRenderer.invoke('project:export-excel', project),
+    projectExportWord: (project: any) => ipcRenderer.invoke('project:export-word', project),
     settingsRead: () => ipcRenderer.invoke('settings:read') as Promise<Settings>,
     settingsWrite: (settings: Settings) =>
       ipcRenderer.invoke('settings:write', settings) as Promise<boolean>,

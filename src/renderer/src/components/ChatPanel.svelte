@@ -13,7 +13,11 @@
   }
 
   interface Props {
-    messages?: Array<{ role: 'user' | 'assistant'; content: string; guidance?: GuidanceData }>
+    messages?: Array<{
+      role: 'user' | 'assistant' | 'system'
+      content: any
+      guidance?: GuidanceData
+    }>
     isLoading?: boolean
     onsend?: (content: string, images?: string[]) => void
     onstop?: () => void
@@ -26,10 +30,10 @@
   let textarea: HTMLTextAreaElement
   let isNearBottom = $state(true)
   let lastMessageCount = 0
-  let pendingImages = <string[]>([])
+  let pendingImages = <string[]>[]
   let fileInput: HTMLInputElement
 
-    function triggerFileSelect() {
+  function triggerFileSelect() {
     fileInput?.click()
   }
 
@@ -38,7 +42,7 @@
     if (input.files && input.files[0]) {
       const file = input.files[0]
       if (!file.type.startsWith('image/')) return
-      
+
       const reader = new FileReader()
       reader.onload = (e) => {
         if (typeof e.target?.result === 'string') {
@@ -53,7 +57,6 @@
   function removeImage(index: number) {
     pendingImages = pendingImages.filter((_, i) => i !== index)
   }
-
 
   function handleSend() {
     if (!inputContent.trim() && pendingImages.length === 0) return
@@ -106,7 +109,19 @@
     lastMessageCount = count
   })
 
-  function formatContent(content: string): string {
+  function formatContent(content: any): string {
+    if (typeof content !== 'string') {
+      if (Array.isArray(content)) {
+        // Naive handling for multimodal: just join text parts
+        return (
+          content
+            .filter((c) => c.type === 'text')
+            .map((c) => c.text)
+            .join('\n') || '[Image Content]'
+        )
+      }
+      return String(content)
+    }
     // Remove JSON command blocks (typically at the end of AI response)
     // Matches ```json { ... } ``` or ```json [ ... ] ```
     // Updated to match both object and array formats loosely
@@ -182,7 +197,13 @@
     {/if}
     <div class="input-wrapper">
       <button class="attach-button" onclick={triggerFileSelect} title="Attach Image"> 📷 </button>
-   <input type="file" bind:this={fileInput} onchange={handleFileSelect} accept="image/*" style="display: none;" />
+      <input
+        type="file"
+        bind:this={fileInput}
+        onchange={handleFileSelect}
+        accept="image/*"
+        style="display: none;"
+      />
       <textarea
         bind:this={textarea}
         bind:value={inputContent}
@@ -190,7 +211,11 @@
         placeholder="输入消息... (Enter 发送, Shift+Enter 换行)"
         rows="1"
       ></textarea>
-      <button class="send-button" onclick={handleSend} disabled={!inputContent.trim() && pendingImages.length === 0}>
+      <button
+        class="send-button"
+        onclick={handleSend}
+        disabled={!inputContent.trim() && pendingImages.length === 0}
+      >
         发送
       </button>
     </div>

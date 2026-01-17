@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store'
-import type { TreeNode } from '/types'
+import type { TreeNode } from '$lib/types'
 
 interface TreeState {
   expandedIds: Set<string>
@@ -54,7 +54,8 @@ function createTreeStore() {
     selectNode: (id: string | null) => update((s) => ({ ...s, selectedId: id })),
     setDragging: (id: string | null) => update((s) => ({ ...s, draggingId: id })),
     setEditing: (id: string | null) => update((s) => ({ ...s, editingId: id })),
-    setDropTarget: (target: TreeState['dropTarget']) => update((s) => ({ ...s, dropTarget: target }))
+    setDropTarget: (target: TreeState['dropTarget']) =>
+      update((s) => ({ ...s, dropTarget: target }))
   }
 }
 

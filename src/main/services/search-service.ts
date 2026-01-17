@@ -52,7 +52,7 @@ export class SearchService {
     }
   }
 
-  private async searchMetaso(query: string, apiKey: string): Promise<SearchResult[]> {
+  private async searchMetaso(query: string, _apiKey: string): Promise<SearchResult[]> {
     // MetaSo Implementation
     // Using a proxy or direct API if available. Assuming standard format for now.
     try {

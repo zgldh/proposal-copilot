@@ -170,6 +170,28 @@
   function closeNewProjectDialog() {
     showNewProjectDialog = false
   }
+
+  async function handleExportWord() {
+    if (!$projectStore.currentProject) return
+    try {
+      const path = await window.electron.project.exportWord($projectStore.currentProject)
+      if (path) toast.success(`Exported to ${path}`)
+    } catch (e) {
+      console.error(e)
+      toast.error('Export failed')
+    }
+  }
+
+  async function handleExportExcel() {
+    if (!$projectStore.currentProject) return
+    try {
+      const path = await window.electron.project.exportExcel($projectStore.currentProject)
+      if (path) toast.success(`Exported to ${path}`)
+    } catch (e) {
+      console.error(e)
+      toast.error('Export failed')
+    }
+  }
 </script>
 
 <div class="workbench">
@@ -207,19 +229,29 @@
           {/snippet}
           {#snippet right()}
             <div class="right-panel-container">
-              <div class="right-panel-tabs">
-                <button
-                  class:active={rightPanelView === 'tree'}
-                  onclick={() => (rightPanelView = 'tree')}
-                >
-                  Structure
-                </button>
-                <button
-                  class:active={rightPanelView === 'preview'}
-                  onclick={() => (rightPanelView = 'preview')}
-                >
-                  Preview
-                </button>
+              <div class="right-panel-header">
+                <div class="right-panel-tabs">
+                  <button
+                    class:active={rightPanelView === 'tree'}
+                    onclick={() => (rightPanelView = 'tree')}
+                  >
+                    Structure
+                  </button>
+                  <button
+                    class:active={rightPanelView === 'preview'}
+                    onclick={() => (rightPanelView = 'preview')}
+                  >
+                    Preview
+                  </button>
+                </div>
+                <div class="right-panel-actions">
+                  <button class="icon-btn" onclick={handleExportWord} title="Export Word">
+                    <span>📄</span>
+                  </button>
+                  <button class="icon-btn" onclick={handleExportExcel} title="Export Excel">
+                    <span>📊</span>
+                  </button>
+                </div>
               </div>
               {#if rightPanelView === 'tree'}
                 <TreeView />
@@ -280,10 +312,44 @@
     background: var(--color-background);
   }
 
-  .right-panel-tabs {
+  .right-panel-header {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
     border-bottom: 1px solid var(--ev-c-gray-3);
     background: var(--color-background-soft);
+    padding-right: 8px;
+  }
+
+  .right-panel-tabs {
+    display: flex;
+    flex: 1;
+  }
+
+  .right-panel-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+    transition: all 0.2s ease;
+  }
+
+  .icon-btn:hover {
+    background: var(--color-background-mute);
+    color: var(--color-text);
   }
 
   .right-panel-tabs button {

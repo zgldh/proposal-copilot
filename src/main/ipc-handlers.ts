@@ -3,6 +3,8 @@ import { existsSync, writeFileSync, readFileSync, readdirSync } from 'fs'
 import { join, normalize } from 'path'
 import { app } from 'electron'
 import { projectService, Project } from './services/project-service'
+import { ExcelGenerator } from './services/excel-generator'
+import { WordGenerator } from './services/word-generator'
 
 export interface ProviderConfig {
   id: string
@@ -137,6 +139,49 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
       return restoredProject
     } catch (error) {
       console.error('[IPC] project:undo error:', error)
+      throw error
+    }
+  })
+
+  const excelGenerator = new ExcelGenerator()
+  const wordGenerator = new WordGenerator()
+
+  ipcMain.handle('project:export-excel', async (_event, project: Project) => {
+    console.log('[IPC] project:export-excel')
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export Excel',
+      defaultPath: `${project.meta.name}.xlsx`,
+      filters: [{ name: 'Excel Workbook', extensions: ['xlsx'] }]
+    })
+
+    if (result.canceled || !result.filePath) return null
+
+    try {
+      const buffer = await excelGenerator.generate(project)
+      writeFileSync(result.filePath, buffer)
+      return result.filePath
+    } catch (error) {
+      console.error('Export failed:', error)
+      throw error
+    }
+  })
+
+  ipcMain.handle('project:export-word', async (_event, project: Project) => {
+    console.log('[IPC] project:export-word')
+    const result = await dialog.showSaveDialog(mainWindow, {
+      title: 'Export Word',
+      defaultPath: `${project.meta.name}.docx`,
+      filters: [{ name: 'Word Document', extensions: ['docx'] }]
+    })
+
+    if (result.canceled || !result.filePath) return null
+
+    try {
+      const buffer = await wordGenerator.generate(project)
+      writeFileSync(result.filePath, buffer)
+      return result.filePath
+    } catch (error) {
+      console.error('Export failed:', error)
       throw error
     }
   })

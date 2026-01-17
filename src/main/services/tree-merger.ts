@@ -16,8 +16,12 @@ export class TreeMerger {
         case 'add':
           newTree = this.addNode(newTree, op)
           break
-        // Implement update/delete/move if needed in Main process context
-        // For now, MVP focuses on Add.
+        case 'update':
+          newTree = this.updateNode(newTree, op)
+          break
+        case 'delete':
+          newTree = this.deleteNode(newTree, op)
+          break
       }
     }
 
@@ -43,7 +47,7 @@ export class TreeMerger {
 
     // Recursive add
     const addToChildren = (nodes: TreeNode[]): TreeNode[] => {
-      return nodes.map(node => {
+      return nodes.map((node) => {
         if (node.id === op.targetParentId) {
           return { ...node, children: [...node.children, newNode] }
         }
@@ -55,5 +59,38 @@ export class TreeMerger {
     }
 
     return addToChildren(tree)
+  }
+
+  private updateNode(tree: TreeNode[], op: TreeOperation): TreeNode[] {
+    if (!op.targetNodeId || !op.nodeData) return tree
+
+    const updateRecursive = (nodes: TreeNode[]): TreeNode[] => {
+      return nodes.map((node) => {
+        if (node.id === op.targetNodeId) {
+          return { ...node, ...op.nodeData }
+        }
+        if (node.children.length > 0) {
+          return { ...node, children: updateRecursive(node.children) }
+        }
+        return node
+      })
+    }
+
+    return updateRecursive(tree)
+  }
+
+  private deleteNode(tree: TreeNode[], op: TreeOperation): TreeNode[] {
+    if (!op.targetNodeId) return tree
+
+    const deleteRecursive = (nodes: TreeNode[]): TreeNode[] => {
+      return nodes
+        .filter((node) => node.id !== op.targetNodeId)
+        .map((node) => ({
+          ...node,
+          children: deleteRecursive(node.children)
+        }))
+    }
+
+    return deleteRecursive(tree)
   }
 }

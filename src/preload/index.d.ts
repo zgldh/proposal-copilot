@@ -12,14 +12,14 @@ interface ProviderConfig {
 
 interface ChatMessage {
   role: 'system' | 'user' | 'assistant'
-  content: string
+  content: string | any
 }
 
 interface Settings {
   theme: 'light' | 'dark'
   active_provider_id: string
   providers: Record<string, ProviderConfig>
-  search_provider: 'mock' | 'tavily'
+  search_provider: 'mock' | 'tavily' | 'metaso'
   search_api_key: string
 }
 
@@ -121,6 +121,8 @@ declare global {
         read: (path: string) => Promise<Project>
         save: (path: string, data: Project) => Promise<boolean>
         undo: (path: string) => Promise<Project | null>
+        exportExcel: (project: Project) => Promise<string | null>
+        exportWord: (project: Project) => Promise<string | null>
       }
       settings: {
         read: () => Promise<Settings>
