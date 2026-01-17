@@ -12,8 +12,8 @@ export interface GuidanceData {
 }
 
 interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
+  role: 'user' | 'assistant' | 'system'
+  content: string | any
   timestamp: number
   guidance?: GuidanceData
 }
@@ -35,14 +35,14 @@ function createChatStore() {
     subscribe,
 
     addMessage(role: ChatMessage['role'], content: any) {
-      update(state => ({
+      update((state) => ({
         ...state,
         messages: [...state.messages, { role, content, timestamp: Date.now() }]
       }))
     },
 
     setLoading(loading: boolean) {
-      update(state => ({ ...state, isLoading: loading }))
+      update((state) => ({ ...state, isLoading: loading }))
     },
 
     addUserMessage(content: any) {
@@ -54,7 +54,7 @@ function createChatStore() {
     },
 
     updateLastAssistantMessage(content: string, guidance?: GuidanceData) {
-      update(state => {
+      update((state) => {
         const messages = [...state.messages]
         const lastIndex = messages.length - 1
         if (lastIndex >= 0 && messages[lastIndex].role === 'assistant') {
@@ -69,7 +69,7 @@ function createChatStore() {
     },
 
     appendStreamChunk(chunk: string) {
-      update(state => {
+      update((state) => {
         const messages = [...state.messages]
         const lastIndex = messages.length - 1
         if (lastIndex >= 0 && messages[lastIndex].role === 'assistant') {

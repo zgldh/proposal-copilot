@@ -45,6 +45,33 @@ export class ProjectService {
 
     const rawData = JSON.parse(readFileSync(filePath, 'utf-8'))
 
+    // Load structure if it exists separately
+    const structurePath = join(dirname(filePath), 'structure.json')
+    if (existsSync(structurePath)) {
+      try {
+        rawData.structure_tree = JSON.parse(readFileSync(structurePath, 'utf-8'))
+      } catch (e) {
+        console.error('[ProjectService] Failed to load structure.json:', e)
+        rawData.structure_tree = rawData.structure_tree || []
+      }
+    } else {
+      rawData.structure_tree = rawData.structure_tree || []
+    }
+
+    // Load chat history if it exists separately
+    const chatHistoryPath = join(dirname(filePath), 'chat-history.json')
+    if (existsSync(chatHistoryPath)) {
+      try {
+        const chatData = JSON.parse(readFileSync(chatHistoryPath, 'utf-8'))
+        rawData.chat_history = chatData
+      } catch (e) {
+        console.error('[ProjectService] Failed to load chat-history.json:', e)
+        rawData.chat_history = rawData.chat_history || []
+      }
+    } else {
+      rawData.chat_history = rawData.chat_history || []
+    }
+
     // Migrate
     const migratedData = this.migration.migrate(rawData)
 
@@ -59,6 +86,7 @@ export class ProjectService {
 
   async saveProject(path: string, data: Project): Promise<void> {
     const filePath = path.endsWith('project.json') ? path : join(path, 'project.json')
+    const projectDir = dirname(filePath)
     console.log('[ProjectService] Saving to path:', filePath)
 
     // Validate before save
@@ -68,11 +96,22 @@ export class ProjectService {
     }
 
     data.meta.last_modified = new Date().toISOString()
-    writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8')
 
-    // Milestone 2: Also write structure to a separate file for visibility
-    const structurePath = join(dirname(filePath), 'structure.json')
-    writeFileSync(structurePath, JSON.stringify(data.structure_tree, null, 2), 'utf-8')
+    // Split data for separate files
+    const { structure_tree, chat_history, ...projectMeta } = data
+
+    // 1. Save project.json (Meta + Context)
+    writeFileSync(filePath, JSON.stringify(projectMeta, null, 2), 'utf-8')
+
+    // 2. Save structure.json
+    const structurePath = join(projectDir, 'structure.json')
+    writeFileSync(structurePath, JSON.stringify(structure_tree || [], null, 2), 'utf-8')
+
+    // 3. Save chat-history.json
+    if (chat_history) {
+      const chatHistoryPath = join(projectDir, 'chat-history.json')
+      writeFileSync(chatHistoryPath, JSON.stringify(chat_history, null, 2), 'utf-8')
+    }
   }
 
   async createSnapshot(path: string, description: string, data?: Project): Promise<string> {

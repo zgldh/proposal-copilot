@@ -53,8 +53,8 @@
         // Only load if it's a DIFFERENT project or we need to reload
         if ($projectStore.projectPath !== nextTab.path) {
           projectStore.clear() // Memory dump
-          await projectStore.loadProject(nextTab.path)
           chatStore.clear()
+          await projectStore.loadProject(nextTab.path)
         }
       }
       workbenchStore.setSwitching(false)

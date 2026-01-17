@@ -3,8 +3,11 @@ export interface Project {
     name: string
     create_time: string
     version: string
+    last_modified?: string
+    schema_version?: string
   }
   context: string
+  chat_history?: any[]
   structure_tree: TreeNode[]
 }
 

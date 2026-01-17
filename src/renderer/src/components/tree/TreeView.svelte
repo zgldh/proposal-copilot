@@ -192,7 +192,7 @@
   .tree-view-container {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: calc(100vh - 80px);
     background: var(--color-background);
     color: var(--color-text);
   }

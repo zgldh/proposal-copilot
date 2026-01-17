@@ -1,6 +1,6 @@
 export const PROJECT_SCHEMA = {
   type: 'object',
-  required: ['meta', 'context', 'structure_tree'],
+  required: ['meta', 'context'],
   properties: {
     meta: {
       type: 'object',
@@ -14,6 +14,19 @@ export const PROJECT_SCHEMA = {
       }
     },
     context: { type: 'string' },
+    chat_history: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['role', 'content'],
+        properties: {
+          role: { enum: ['user', 'assistant', 'system'] },
+          content: { type: ['string', 'array', 'object'] },
+          timestamp: { type: 'number' },
+          guidance: { type: 'object' }
+        }
+      }
+    },
     structure_tree: {
       type: 'array',
       items: { $ref: '#/definitions/treeNode' }

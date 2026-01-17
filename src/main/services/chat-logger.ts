@@ -2,22 +2,26 @@ import { writeFileSync, existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 
 export interface LogEntry {
-  timestamp: string
   role: 'user' | 'assistant' | 'system'
   content: string | any
+  timestamp: number
+  guidance?: any
 }
 
 export class ChatLogger {
   private getLogPath(projectPath: string): string {
-    // If projectPath is a directory, append chat-history.json
-    // If it's the project.json file, use its directory
     const dir = projectPath.endsWith('project.json')
       ? projectPath.replace('project.json', '')
       : projectPath
     return join(dir, 'chat-history.json')
   }
 
-  log(projectPath: string, role: 'user' | 'assistant' | 'system', content: string | any): void {
+  log(
+    projectPath: string,
+    role: 'user' | 'assistant' | 'system',
+    content: string | any,
+    guidance?: any
+  ): void {
     const logPath = this.getLogPath(projectPath)
     let history: LogEntry[] = []
 
@@ -31,9 +35,10 @@ export class ChatLogger {
     }
 
     history.push({
-      timestamp: new Date().toISOString(),
       role,
-      content
+      content,
+      timestamp: Date.now(),
+      guidance
     })
 
     try {

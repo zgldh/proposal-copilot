@@ -87,9 +87,12 @@ export function setupProjectHandlers(mainWindow: BrowserWindow) {
       meta: {
         name: projectName,
         create_time: new Date().toISOString(),
-        version: '1.0.0'
+        version: '1.0.0',
+        last_modified: new Date().toISOString(),
+        schema_version: '1.0.0'
       },
       context: '',
+      chat_history: [],
       structure_tree: [] as any[]
     }
 

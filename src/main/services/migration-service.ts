@@ -14,7 +14,21 @@ export class MigrationService {
       project.meta.last_modified = new Date().toISOString()
     }
 
-    // Future migrations would go here based on version comparison
+    if (!project.chat_history) {
+      project.chat_history = []
+    } else {
+      // Fix timestamps if they are strings (legacy from ChatLogger) or missing
+      project.chat_history = project.chat_history.map((msg: any) => {
+        let timestamp = msg.timestamp
+        if (typeof timestamp === 'string') {
+          timestamp = new Date(timestamp).getTime()
+        }
+        if (!timestamp) {
+          timestamp = Date.now()
+        }
+        return { ...msg, timestamp }
+      })
+    }
 
     return project as Project
   }

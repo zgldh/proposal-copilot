@@ -147,7 +147,7 @@ export function setupAIHandlers(_mainWindow: BrowserWindow) {
         )
 
         // Log Assistant Message
-        chatLogger.log(projectPath, 'assistant', result.textResponse)
+        chatLogger.log(projectPath, 'assistant', result.textResponse, result.guidance)
 
         activeAbortControllers.delete(senderId)
         console.log('[IPC] ai:process-message success', { operations: result.operations.length })

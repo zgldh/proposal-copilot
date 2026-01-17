@@ -62,11 +62,14 @@ function createProjectStore() {
     },
 
     newProject: async (name: string, path: string) => {
+      const now = new Date().toISOString()
       const newProject: Project = {
         meta: {
           name,
-          create_time: new Date().toISOString(),
-          version: '1.0.0'
+          create_time: now,
+          version: '1.0.0',
+          last_modified: now,
+          schema_version: '1.0.0'
         },
         context: '',
         chat_history: [],
@@ -220,7 +223,7 @@ function createProjectStore() {
         }
 
         const newTree = findAndRemove(state.currentProject.structure_tree)
-        
+
         treeStore.selectNode(null)
         treeStore.setEditing(null)
 
@@ -336,6 +339,31 @@ function createProjectStore() {
           })
         }
 
+        const updateRecursive = (
+          nodes: TreeNode[],
+          nodeId: string,
+          updates: Partial<TreeNode>
+        ): TreeNode[] => {
+          return nodes.map((node) => {
+            if (node.id === nodeId) {
+              return { ...node, ...updates }
+            }
+            if (node.children.length > 0) {
+              return { ...node, children: updateRecursive(node.children, nodeId, updates) }
+            }
+            return node
+          })
+        }
+
+        const deleteRecursive = (nodes: TreeNode[], nodeId: string): TreeNode[] => {
+          return nodes
+            .filter((node) => node.id !== nodeId)
+            .map((node) => ({
+              ...node,
+              children: deleteRecursive(node.children, nodeId)
+            }))
+        }
+
         for (const op of operations) {
           if (op.type === 'add' && op.nodeData) {
             const newNode: TreeNode = {
@@ -352,6 +380,10 @@ function createProjectStore() {
             } else {
               newTree = addRecursive(newTree, op.targetParentId, newNode)
             }
+          } else if (op.type === 'update' && op.targetNodeId && op.nodeData) {
+            newTree = updateRecursive(newTree, op.targetNodeId, op.nodeData)
+          } else if (op.type === 'delete' && op.targetNodeId) {
+            newTree = deleteRecursive(newTree, op.targetNodeId)
           }
         }
 
@@ -373,14 +405,14 @@ function createProjectStore() {
       try {
         const previousProject = await window.electron.project.undo(state.projectPath)
         if (previousProject) {
+          const project = previousProject as Project
           set({
-            currentProject: previousProject as Project,
+            currentProject: project,
             projectPath: state.projectPath,
             isDirty: false
           })
+          chatStore.loadHistory(project.chat_history || [])
           toast.success('Undo successful')
-        } else {
-          toast.info('Nothing to undo')
         }
       } catch (error) {
         toast.error('Undo failed: ' + String(error))
