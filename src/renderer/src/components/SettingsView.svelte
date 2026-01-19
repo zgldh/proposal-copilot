@@ -440,7 +440,7 @@
   }
 
   .save-button:hover {
-    background-color: var(--ev-c-primary-soft);
+    background-color: var(--ev-c-primary-hover);
   }
 
   .model-select-row {
