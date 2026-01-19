@@ -98,8 +98,6 @@ RULES:
         }
 
         console.log('[AI-Flow] JSON parsed. Ops:', operations.length, 'Guidance:', !!guidance)
-        // Remove the code block from the text response for final display
-        textResponse = rawResponse.replace(match[0], '').trim()
       } catch (e) {
         console.error('[AI-Flow] Failed to parse operations JSON:', e)
       }

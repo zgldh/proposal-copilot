@@ -91,19 +91,8 @@
   let stopStreaming: (() => void) | null = null
   let isCancelled = false
 
-  async function handleSendMessage(content: string, images: string[] = []) {
-    if (!content.trim() && images.length === 0) return
-
+  async function processAIResponse(userText: string) {
     try {
-      let messageContent: any = content
-      if (images.length > 0) {
-        messageContent = [
-          { type: 'text', text: content },
-          ...images.map((url) => ({ type: 'image_url', image_url: { url } }))
-        ]
-      }
-      chatStore.addUserMessage(messageContent)
-      projectStore.updateChatHistory(chatStore.getMessages())
       chatStore.setLoading(true)
       isCancelled = false
 
@@ -135,7 +124,7 @@
 
       // Call AI Engine
       const result = await window.electronAPI.ai.processMessage({
-        message: content,
+        message: userText,
         history,
         projectPath: $projectStore.projectPath!,
         projectContext,
@@ -154,12 +143,56 @@
       stopStreaming = null
     } catch (error) {
       if (!isCancelled) {
-        console.error('Failed to send message:', error)
-        toast.error('Failed to send message')
+        console.error('Failed to process message:', error)
+        toast.error('Failed to process message')
       }
     } finally {
       chatStore.setLoading(false)
       stopStreaming = null
+    }
+  }
+
+  async function handleSendMessage(content: string, images: string[] = []) {
+    if (!content.trim() && images.length === 0) return
+
+    let messageContent: any = content
+    if (images.length > 0) {
+      messageContent = [
+        { type: 'text', text: content },
+        ...images.map((url) => ({ type: 'image_url', image_url: { url } }))
+      ]
+    }
+    chatStore.addUserMessage(messageContent)
+    projectStore.updateChatHistory(chatStore.getMessages())
+
+    await processAIResponse(content)
+  }
+
+  async function handleRegenerate() {
+    const messages = $chatStore.messages
+    if (messages.length === 0) return
+
+    const lastMsg = messages[messages.length - 1]
+
+    if (lastMsg.role === 'assistant') {
+      chatStore.removeLastMessage()
+      projectStore.updateChatHistory(chatStore.getMessages())
+
+      const currentMessages = $chatStore.messages
+      const lastUserMsg = currentMessages[currentMessages.length - 1]
+
+      if (lastUserMsg && lastUserMsg.role === 'user') {
+        let textToResend = ''
+        if (typeof lastUserMsg.content === 'string') {
+          textToResend = lastUserMsg.content
+        } else if (Array.isArray(lastUserMsg.content)) {
+          // Extract text part from multi-modal content
+          const textPart = lastUserMsg.content.find((p: any) => p.type === 'text')
+          textToResend = textPart ? textPart.text : ''
+        }
+
+        await processAIResponse(textToResend)
+      }
     }
   }
 
@@ -225,6 +258,7 @@
               isLoading={$chatStore.isLoading}
               onsend={handleSendMessage}
               onstop={handleStop}
+              onregenerate={handleRegenerate}
             />
           {/snippet}
           {#snippet right()}

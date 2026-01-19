@@ -1,5 +1,6 @@
 <script lang="ts">
   import { marked } from 'marked'
+  import CommandBlock from './chat/CommandBlock.svelte'
 
   interface GuidanceOption {
     label: string
@@ -21,9 +22,10 @@
     isLoading?: boolean
     onsend?: (content: string, images?: string[]) => void
     onstop?: () => void
+    onregenerate?: () => void
   }
 
-  let { messages = [], isLoading = false, onsend, onstop }: Props = $props()
+  let { messages = [], isLoading = false, onsend, onstop, onregenerate }: Props = $props()
 
   let inputContent = $state('')
   let messagesContainer: HTMLDivElement
@@ -109,25 +111,34 @@
     lastMessageCount = count
   })
 
-  function formatContent(content: any): string {
+  function parseMessageContent(content: any): { text: string; command?: string } {
     if (typeof content !== 'string') {
       if (Array.isArray(content)) {
-        // Naive handling for multimodal: just join text parts
-        return (
-          content
+        return { 
+          text: content
             .filter((c) => c.type === 'text')
             .map((c) => c.text)
             .join('\n') || '[Image Content]'
-        )
+        }
       }
-      return String(content)
+      return { text: String(content) }
     }
-    // Remove JSON command blocks (typically at the end of AI response)
-    // Matches ```json { ... } ``` or ```json [ ... ] ```
-    // Updated to match both object and array formats loosely
-    const jsonBlockRegex = /```(?:json)?\s*[\{\[][\s\S]*?[\}\]]\s*```$/
-    const cleaned = content.replace(jsonBlockRegex, '').trim()
-    return marked.parse(cleaned) as string
+
+    // Look for the start of the command block (```json or just ``` at the end)
+    const jsonStartMarker = '```json'
+    const lastIndex = content.lastIndexOf(jsonStartMarker)
+    
+    if (lastIndex !== -1) {
+       const text = content.substring(0, lastIndex).trim()
+       const command = content.substring(lastIndex).trim()
+       return { text, command }
+    }
+
+    return { text: content }
+  }
+
+  function renderMarkdown(text: string): string {
+    return marked.parse(text) as string
   }
 </script>
 
@@ -139,7 +150,10 @@
         <p class="hint">例如：添加一个视频监控系统，包含 10 个摄像头</p>
       </div>
     {:else}
-      {#each messages as message}
+      {#each messages as message, i}
+        {@const isLastMessage = i === messages.length - 1}
+        {@const parsed = parseMessageContent(message.content)}
+        
         <div
           class="message"
           class:user={message.role === 'user'}
@@ -149,8 +163,20 @@
             <span class="role-label">{message.role === 'user' ? '我' : 'AI'}</span>
           </div>
           <div class="message-content">
-            {@html formatContent(message.content)}
-            {#if message.role === 'assistant' && isLoading && message === messages[messages.length - 1]}
+            <!-- Render Text Part -->
+            {#if parsed.text}
+              {@html renderMarkdown(parsed.text)}
+            {/if}
+
+            <!-- Render Command Part (if exists) -->
+            {#if parsed.command}
+              <CommandBlock 
+                content={parsed.command} 
+                isStreaming={isLoading && isLastMessage && message.role === 'assistant'} 
+              />
+            {/if}
+
+            {#if message.role === 'assistant' && isLoading && isLastMessage && !parsed.command}
               <span class="cursor"></span>
             {/if}
 
@@ -166,6 +192,14 @@
                     </button>
                   {/each}
                 </div>
+              </div>
+            {/if}
+
+            {#if !isLoading && isLastMessage && message.role === 'assistant'}
+              <div class="message-actions">
+                <button class="regenerate-btn" onclick={onregenerate} title="Regenerate response">
+                  🔄 Regenerate
+                </button>
               </div>
             {/if}
           </div>
@@ -524,5 +558,28 @@
   .guidance-btn:hover {
     background: var(--ev-c-primary);
     color: var(--color-background);
+  }
+
+  .message-actions {
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: flex-start;
+  }
+  .regenerate-btn {
+    background: transparent;
+    border: 1px solid var(--ev-c-gray-3);
+    color: var(--ev-c-text-3);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+  }
+  .regenerate-btn:hover {
+    background: var(--ev-c-gray-3);
+    color: var(--color-text);
   }
 </style>

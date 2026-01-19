@@ -53,6 +53,13 @@ function createChatStore() {
       this.addMessage('assistant', content)
     },
 
+    removeLastMessage() {
+      update((state) => {
+        const messages = state.messages.slice(0, -1)
+        return { ...state, messages }
+      })
+    },
+
     updateLastAssistantMessage(content: string, guidance?: GuidanceData) {
       update((state) => {
         const messages = [...state.messages]
